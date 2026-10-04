@@ -1,0 +1,402 @@
+[
+ {
+  "categoria": "Hamburguesas",
+  "nombre": "Combo dúo mini",
+  "descripcion": "2 hamburguesas mini de carne o pollo, vegetales y 3 salsas básicas, con papas a la francesa",
+  "precioUsd": 4.99,
+  "imagen": "img/duo-mini.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Hamburguesas",
+  "nombre": "Tradicional",
+  "descripcion": "Pan de orégano, 150 g de pollo o carne, queso Kraft, vegetales y 3 salsas básicas, con papas a la francesa o rústicas",
+  "precioUsd": 4.99,
+  "imagen": "img/tradicional.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Hamburguesas",
+  "nombre": "Pollo crispy",
+  "descripcion": "120 g de milanesa rebozada en panko, lechuga, tomate, cebollas caramelizadas, salsa tártara y queso Kraft, con papas a la francesa",
+  "precioUsd": 6.99,
+  "imagen": "img/pollo-crispy.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Hamburguesas",
+  "nombre": "Ocumare Gourmet",
+  "descripcion": "250 g de carne rellena de mozzarella envuelta en tocineta, vegetales, salsa big mac, pepinillos y queso Kraft, con papas a la francesa",
+  "precioUsd": 8.99,
+  "imagen": "img/ocumare-gourmet.jpg",
+  "destacado": true
+ },
+ {
+  "categoria": "Hamburguesas",
+  "nombre": "Poseidón",
+  "descripcion": "100 g de camarón al ajillo y 100 g de pulpo laqueado, lechuga, salsa spicy y queso crema, con papas a la francesa o rústicas",
+  "precioUsd": 8.99,
+  "imagen": "img/poseidon.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Hamburguesas",
+  "nombre": "Especial",
+  "descripcion": "150 g de pollo o carne, queso Kraft, vegetales, 3 salsas, huevo, jamón y tocineta, con papas a la francesa o rústicas",
+  "precioUsd": 8.99,
+  "imagen": "img/especial.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Hamburguesas",
+  "nombre": "Mixta",
+  "descripcion": "120 g de pollo y 150 g de carne, queso Kraft, vegetales, 3 salsas, huevo, jamón y tocineta, con papas a la francesa o rústicas",
+  "precioUsd": 9.99,
+  "imagen": "img/mixta.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Hamburguesas",
+  "nombre": "Cheese burger",
+  "descripcion": "Doble carne de 150 g, triple queso Kraft, pepinillos, sweet relish y salsa big mac, con papas a la francesa o rústicas",
+  "precioUsd": 9.99,
+  "imagen": "img/cheese-burger.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Perros y pepitos",
+  "nombre": "Perro normal",
+  "descripcion": "Pan de orégano, 1 salchicha, ensalada, papitas y 3 salsas básicas",
+  "precioUsd": 2.5,
+  "imagen": "img/perro-normal.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Perros y pepitos",
+  "nombre": "Perro especial",
+  "descripcion": "Salchicha, ensalada, papitas, 3 salsas básicas y queso amarillo",
+  "precioUsd": 2.99,
+  "imagen": "img/perro-especial.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Perros y pepitos",
+  "nombre": "Perro gourmet",
+  "descripcion": "Salchicha, ensalada, papitas, salsa tártara, queso amarillo, pepinillo, sweet relish y tocineta",
+  "precioUsd": 4.99,
+  "imagen": "img/perro-gourmet.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Perros y pepitos",
+  "nombre": "Perro polaco",
+  "descripcion": "Salchicha polaca, ensalada, papitas, 3 salsas básicas y queso amarillo",
+  "precioUsd": 4.99,
+  "imagen": "img/perro-polaco.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Perros y pepitos",
+  "nombre": "Ternerito",
+  "descripcion": "Pan de orégano con 150 g de pollo o carne, ensalada, salsa tártara, queso amarillo y tocineta",
+  "precioUsd": 7,
+  "imagen": "img/ternerito.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Perros y pepitos",
+  "nombre": "Pepito normal",
+  "descripcion": "Pan de orégano de 40 cm, 300 g de carne o pollo, lechuga, tomate, cebolla, 3 salsas, papitas, queso amarillo y jamón, con papas fritas",
+  "precioUsd": 16,
+  "imagen": "img/pepito-normal.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Perros y pepitos",
+  "nombre": "Pepito especial",
+  "descripcion": "Pan de 40 cm, 300 g de carne o pollo, vegetales, 3 salsas, papitas, queso amarillo, jamón, tocineta, huevo y 2 chorizos, con papas fritas",
+  "precioUsd": 21,
+  "imagen": null,
+  "destacado": false
+ },
+ {
+  "categoria": "Perros y pepitos",
+  "nombre": "Pepito playero",
+  "descripcion": "Pan de orégano, 250 g de pollo y 250 g de camarones rebozados, lechuga y salsa tártara, con 200 g de papas rústicas",
+  "precioUsd": 25,
+  "imagen": "img/pepito-playero.jpg",
+  "destacado": true
+ },
+ {
+  "categoria": "Pollo",
+  "nombre": "Pollo frito 1 pieza",
+  "descripcion": "1 pieza rebozada con 100 g de papas fritas, 2 arepitas y ensalada",
+  "precioUsd": 5,
+  "imagen": "img/pollo-1.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pollo",
+  "nombre": "Pollo frito 2 piezas",
+  "descripcion": "2 piezas rebozadas con 150 g de papas fritas, 5 arepitas y ensalada",
+  "precioUsd": 9,
+  "imagen": "img/pollo-2.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pollo",
+  "nombre": "Pollo frito 3 piezas",
+  "descripcion": "3 piezas rebozadas con 250 g de papas fritas, 8 arepitas y ensalada",
+  "precioUsd": 13,
+  "imagen": "img/pollo-3.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pollo",
+  "nombre": "Tender de pollo",
+  "descripcion": "120 g de milanesa en tiras rebozadas con 150 g de papas fritas",
+  "precioUsd": 5,
+  "imagen": "img/tender.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pollo",
+  "nombre": "Alitas 16 piezas",
+  "descripcion": "Alitas rebozadas en salsa BBQ y mostaza miel, 200 g de papas fritas, 6 arepitas y ensalada",
+  "precioUsd": 14,
+  "imagen": "img/alitas.jpg",
+  "destacado": true
+ },
+ {
+  "categoria": "Pollo",
+  "nombre": "Club house",
+  "descripcion": "250 g de pollo, 2 huevos, jamón, queso amarillo, lechuga, tomate, cebolla y 3 salsas en pan blanco, con 300 g de papas fritas",
+  "precioUsd": 17,
+  "imagen": "img/club-house.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pollo",
+  "nombre": "Patacón",
+  "descripcion": "2 ruedas de patacón rellenas con 150 g de proteína, vegetales, 3 salsas, jamón, queso amarillo y 1 huevo",
+  "precioUsd": 9,
+  "imagen": null,
+  "destacado": false
+ },
+ {
+  "categoria": "Parrillas",
+  "nombre": "Parrilla 1 persona",
+  "descripcion": "120 g de pollo, 120 g de bistec, 1 chorizo y 200 g de papas fritas, con ensalada",
+  "precioUsd": 15,
+  "imagen": "img/parrilla-1.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Parrillas",
+  "nombre": "Parrilla para 2",
+  "descripcion": "250 g de pollo, 250 g de bistec, 2 chorizos, 300 g de papas fritas y 6 arepitas, con ensalada",
+  "precioUsd": 25,
+  "imagen": "img/parrilla-2.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Parrillas",
+  "nombre": "Parrilla mar y tierra",
+  "descripcion": "250 g de pollo, 250 g de bistec, 250 g de mariscos y 300 g de papas fritas, con ensalada",
+  "precioUsd": 28,
+  "imagen": "img/parrilla-mar-tierra.jpg",
+  "destacado": true
+ },
+ {
+  "categoria": "Pescados y mariscos",
+  "nombre": "Pargo rosado",
+  "descripcion": "Pargo frito crujiente con arroz, tostones y ensalada rallada",
+  "precioUsd": 7,
+  "imagen": "img/pargo-rosado.jpg",
+  "destacado": true
+ },
+ {
+  "categoria": "Pescados y mariscos",
+  "nombre": "Pargo blanco",
+  "descripcion": "Pargo frito con 3 tostones, arroz y ensalada",
+  "precioUsd": 7,
+  "imagen": "img/pargo-blanco.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pescados y mariscos",
+  "nombre": "Jurel",
+  "descripcion": "Rueda de jurel a la plancha bañada en ajillo, con arroz, 3 tostones y ensalada",
+  "precioUsd": 8,
+  "imagen": "img/jurel.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pescados y mariscos",
+  "nombre": "Merluza",
+  "descripcion": "Filet de merluza rebozado o al ajillo, con 3 tostones, arroz y ensalada",
+  "precioUsd": 8,
+  "imagen": "img/merluza.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pescados y mariscos",
+  "nombre": "Camarones al ajillo",
+  "descripcion": "300 g de camarón salteado en ajo, mantequilla y vino blanco, con 200 g de papas fritas",
+  "precioUsd": 14,
+  "imagen": "img/camarones-ajillo.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pastas y risottos",
+  "nombre": "Pasta boloñesa",
+  "descripcion": "Vermicelli con 200 g de salsa boloñesa, queso pecorino y 2 tajadas",
+  "precioUsd": 5.99,
+  "imagen": "img/pasta-bolonesa.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pastas y risottos",
+  "nombre": "Pasta cremosa de pollo",
+  "descripcion": "Linguine con tocineta crocante, pollo a las finas hierbas y crema de leche, con pan al ajillo y pecorino",
+  "precioUsd": 7.99,
+  "imagen": "img/pasta-cremosa-pollo.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pastas y risottos",
+  "nombre": "Pasta marinera",
+  "descripcion": "Linguine con 350 g de mariscos salteados en vino blanco y bisque, con parmesano y pan de ajo",
+  "precioUsd": 14,
+  "imagen": "img/pasta-marinera.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pastas y risottos",
+  "nombre": "Pasta frutos del mar",
+  "descripcion": "Linguine con 350 g de mariscos en vino blanco, finas especias y crema, con parmesano y pan de ajo",
+  "precioUsd": 14,
+  "imagen": "img/pasta-frutos-mar.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Pastas y risottos",
+  "nombre": "Risotto de pollo",
+  "descripcion": "Risotto cremoso con pollo, finas hierbas y tocineta en crema de leche, con pecorino y pan de ajo",
+  "precioUsd": 7.99,
+  "imagen": null,
+  "destacado": false
+ },
+ {
+  "categoria": "Pastas y risottos",
+  "nombre": "Risotto de mariscos",
+  "descripcion": "Risotto cremoso con mariscos flameados en vino blanco y crema, con pecorino y pan de ajo",
+  "precioUsd": 14,
+  "imagen": "img/risotto-mariscos.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Ensaladas",
+  "nombre": "César con pollo",
+  "descripcion": "120 g de pollo a la plancha, lechuga, crotones, tocineta, pecorino y aderezo César",
+  "precioUsd": 8,
+  "imagen": "img/cesar-pollo.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Ensaladas",
+  "nombre": "César con camarón",
+  "descripcion": "120 g de camarón al ajillo, lechuga, crotones, tocineta, pecorino y aderezo César",
+  "precioUsd": 10,
+  "imagen": "img/cesar-camaron.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Sopas",
+  "nombre": "Sopa de res",
+  "descripcion": "Sopa grande de costilla con 2 arepitas",
+  "precioUsd": 6,
+  "imagen": "img/sopa-res.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Sopas",
+  "nombre": "Sopa de pescado",
+  "descripcion": "Sopa grande de pescado con 2 arepitas",
+  "precioUsd": 6,
+  "imagen": "img/sopa-pescado.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Sopas",
+  "nombre": "Fosforera",
+  "descripcion": "Sopa grande de mariscos con 2 arepitas",
+  "precioUsd": 10,
+  "imagen": "img/fosforera.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Almuerzos",
+  "nombre": "Ragú de carne",
+  "descripcion": "200 g de ragú de carne con papas y zanahoria, con 3 contornos",
+  "precioUsd": 4.99,
+  "imagen": "img/ragu.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Almuerzos",
+  "nombre": "Bistec encebollado",
+  "descripcion": "120 g de bistec con especias y cebolla salteada, con 3 contornos",
+  "precioUsd": 4.99,
+  "imagen": "img/bistec-encebollado.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Almuerzos",
+  "nombre": "Chuleta de cerdo",
+  "descripcion": "Chuleta fresca con ajo, especias y vino blanco, con 3 contornos",
+  "precioUsd": 4.99,
+  "imagen": "img/chuleta-cerdo.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Almuerzos",
+  "nombre": "Chuleta ahumada",
+  "descripcion": "Chuleta ahumada al ajillo con 3 contornos",
+  "precioUsd": 4.99,
+  "imagen": "img/chuleta-ahumada.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Almuerzos",
+  "nombre": "Pollo guisado",
+  "descripcion": "1 pieza de pollo guisado con papas y zanahorias, con 3 contornos",
+  "precioUsd": 4.99,
+  "imagen": "img/pollo-guisado.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Almuerzos",
+  "nombre": "Milanesa de pollo",
+  "descripcion": "120 g de milanesa con ajo, orégano, pimienta, mantequilla y vino blanco, con 3 contornos",
+  "precioUsd": 4.99,
+  "imagen": "img/milanesa-pollo.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Almuerzos",
+  "nombre": "Pabellón criollo",
+  "descripcion": "Arroz blanco, caraotas, carne mechada, 2 tajadas y queso llanero",
+  "precioUsd": 5.99,
+  "imagen": "img/pabellon.jpg",
+  "destacado": false
+ },
+ {
+  "categoria": "Almuerzos",
+  "nombre": "Milanesa parmesana",
+  "descripcion": "Milanesa de pollo con salsa napolitana, mozzarella y pecorino gratinados, con 3 contornos",
+  "precioUsd": 5.99,
+  "imagen": "img/milanesa-parmesana.jpg",
+  "destacado": false
+ }
+]

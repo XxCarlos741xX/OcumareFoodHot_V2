@@ -1,0 +1,19 @@
+# Servicio de Ocumare Food para systemd.
+# Copiar a /etc/systemd/system/ocumare.service
+[Unit]
+Description=Ocumare Food (POS + web de pedidos)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=ocumare
+WorkingDirectory=/opt/ocumare
+EnvironmentFile=/etc/ocumare/ocumare.env
+Environment=TZ=America/Caracas
+ExecStart=/usr/bin/java -Xms256m -Xmx768m -jar /opt/ocumare/ocumare.jar
+SuccessExitStatus=143
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

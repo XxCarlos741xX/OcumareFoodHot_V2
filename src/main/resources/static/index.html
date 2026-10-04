@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- ✏️ Título y descripción que salen en Google y al compartir el enlace por WhatsApp -->
+<title>Ocumare Food Hot | Pide en línea · 24 horas</title>
+<meta name="description" content="Hamburguesas, pepitos, parrillas, pescado frito y almuerzos en El Limón, Maracay. Abiertos 24 horas con delivery. Arma tu pedido en un minuto.">
+<meta property="og:title" content="Ocumare Food Hot · Pide en línea 24/7">
+<meta property="og:description" content="Comida rápida, parrillas y pescado frito en El Limón, Maracay. Delivery las 24 horas.">
+<meta property="og:image" content="img/hero.jpg">
+<meta name="theme-color" content="#0D0B09">
+<link rel="icon" href="img/logo.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* ================================================================
+     ✏️ 1. COLORES DE LA MARCA (sacados del logo y del menú de Instagram)
+     ================================================================ */
+  --naranja:#E8811E;       /* "Ocumare" del logo: botones y acciones */
+  --naranja-2:#F4A81D;     /* amarillo del degradado del logo */
+  --rojo:#D2361F;          /* "FOOD HOT": etiquetas de lo más pedido */
+  --dorado:#E9B949;        /* dorado del menú: títulos y precios */
+  --verde:#3E8E3A;         /* palmeras del logo */
+  --fondo:#0D0B09;         /* negro cálido del menú */
+  --tarjeta:#1A1612;
+  --tarjeta-2:#231E18;
+  --borde:#2F2820;
+  --texto:#FBF6EE;
+  --texto-suave:#BDB2A3;
+  --whatsapp:#25D366;
+
+  /* ✏️ 2. TIPOGRAFÍAS: Playfair Display como el "MENU" dorado, Montserrat para leer */
+  --f-titulo:'Playfair Display', Georgia, serif;
+  --f-texto:'Montserrat', system-ui, sans-serif;
+  --radio:16px;
+  --grad-marca:linear-gradient(95deg,var(--naranja) 0%,var(--naranja-2) 100%);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-padding-top:64px}
+body{background:var(--fondo);color:var(--texto);font-family:var(--f-texto);line-height:1.45;padding-bottom:110px;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+a{color:inherit}
+.contenedor{max-width:1080px;margin:0 auto;padding:0 16px}
+.oro{color:var(--dorado)}
+
+/* ---------- Portada ---------- */
+.portada{position:relative;overflow:hidden;background:var(--fondo)}
+.portada::before{content:"";position:absolute;inset:0;background:url(img/hero.jpg) center 35%/cover no-repeat;opacity:.55;filter:saturate(1.1)}
+.portada::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(13,11,9,.35) 0%,rgba(13,11,9,.55) 45%,var(--fondo) 100%)}
+.portada .contenedor{position:relative;z-index:1;padding-top:28px;padding-bottom:26px;display:flex;flex-direction:column;align-items:center;text-align:center}
+.logo{width:124px;height:124px;border-radius:50%;background:#fff;object-fit:contain;box-shadow:0 0 0 3px var(--dorado),0 10px 30px rgba(0,0,0,.55)}
+.portada h1{font-family:var(--f-titulo);font-weight:800;font-size:clamp(2rem,7vw,3.2rem);line-height:1.05;margin-top:16px;text-shadow:0 2px 14px rgba(0,0,0,.6)}
+.portada h1 span{background:var(--grad-marca);-webkit-background-clip:text;background-clip:text;color:transparent}
+.lema{margin-top:8px;font-weight:500;color:#EFE6D8;max-width:34ch;text-shadow:0 1px 8px rgba(0,0,0,.7)}
+.chips{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.chip{background:rgba(13,11,9,.6);backdrop-filter:blur(6px);border:1px solid rgba(233,185,73,.45);padding:6px 12px;border-radius:999px;font-size:.8rem;font-weight:600}
+.chip.vivo::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:#3DDC5A;margin-right:6px;box-shadow:0 0 0 3px rgba(61,220,90,.25);vertical-align:1px}
+.linea-oro{height:2px;background:linear-gradient(90deg,transparent,var(--dorado),transparent);margin:0 auto;max-width:520px;opacity:.8}
+
+/* ---------- Lo más pedido ---------- */
+.seccion-titulo{font-family:var(--f-titulo);font-size:1.7rem;font-weight:700;color:var(--dorado);margin:26px 0 12px;display:flex;align-items:baseline;gap:10px}
+.seccion-titulo small{font-family:var(--f-texto);font-size:.78rem;color:var(--texto-suave);font-weight:500}
+.carrusel-wrap{position:relative}
+.carrusel{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:smooth;padding:2px 0 6px;scrollbar-width:none;overscroll-behavior-x:contain;cursor:grab}
+.carrusel::-webkit-scrollbar{display:none}
+.carrusel.arrastrando{scroll-snap-type:none;scroll-behavior:auto;cursor:grabbing;user-select:none}
+.carrusel.arrastrando img{pointer-events:none}
+.top{flex:0 0 78%;scroll-snap-align:start;position:relative;border-radius:var(--radio);overflow:hidden;background:var(--tarjeta);border:1px solid var(--borde)}
+@media(min-width:560px){.top{flex-basis:calc((100% - 12px)/2)}}
+@media(min-width:900px){.top{flex-basis:calc((100% - 24px)/3)}}
+.flecha{position:absolute;top:50%;transform:translateY(-50%);z-index:3;width:44px;height:44px;border-radius:50%;border:1px solid var(--dorado);background:rgba(13,11,9,.88);color:var(--dorado);font-size:1.5rem;line-height:1;display:none;place-items:center;box-shadow:0 4px 14px rgba(0,0,0,.5);transition:opacity .2s}
+.flecha:hover{background:var(--dorado);color:#1A1204}
+.flecha.izq{left:-14px}.flecha.der{right:-14px}
+.flecha:disabled{opacity:0;pointer-events:none}
+@media(hover:hover) and (pointer:fine){.flecha{display:grid}}
+.puntos{display:flex;justify-content:center;gap:6px;margin-top:10px}
+.puntos button{width:8px;height:8px;border-radius:999px;border:none;padding:0;background:var(--borde);transition:width .25s,background .25s}
+.puntos button.activo{width:22px;background:var(--dorado)}
+.top img{aspect-ratio:4/3;width:100%;height:auto;object-fit:cover}
+.top .sin-foto{aspect-ratio:4/3;height:auto}
+.top .info{position:absolute;inset:auto 0 0 0;padding:40px 12px 12px;background:linear-gradient(transparent,rgba(0,0,0,.88));display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.top h3{font-size:1rem;font-weight:700;line-height:1.2}
+.top .precio{display:block;margin-top:2px}
+
+/* ---------- Categorías ---------- */
+nav.categorias{position:sticky;top:0;z-index:15;background:rgba(13,11,9,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--borde);margin-top:20px}
+nav.categorias .contenedor{display:flex;gap:8px;overflow-x:auto;padding:10px 16px;scrollbar-width:none}
+nav.categorias .contenedor::-webkit-scrollbar{display:none}
+nav.categorias a{flex:0 0 auto;text-decoration:none;padding:7px 14px;border-radius:999px;border:1px solid var(--borde);font-size:.85rem;font-weight:600;color:var(--texto-suave);transition:.2s}
+nav.categorias a.activa{background:var(--dorado);border-color:var(--dorado);color:#1A1204}
+
+/* ---------- Menú ---------- */
+.grilla{display:grid;gap:12px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(min-width:720px){.grilla{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}}
+@media(min-width:1000px){.grilla{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.producto{background:var(--tarjeta);border:1px solid var(--borde);border-radius:var(--radio);overflow:hidden;display:flex;flex-direction:column;transition:border-color .2s}
+.producto.en-carrito{border-color:var(--naranja)}
+.foto{position:relative;aspect-ratio:1/1;background:var(--tarjeta-2)}
+.foto img{width:100%;height:100%;object-fit:cover}
+.sin-foto{width:100%;height:100%;display:grid;place-items:center;text-align:center;background:radial-gradient(circle at 50% 40%,#2B231A,#15110D);color:var(--dorado);font-family:var(--f-titulo);font-size:1.1rem;padding:12px}
+.sin-foto span{display:block;font-size:2.4rem;margin-bottom:4px}
+.badge{position:absolute;top:8px;left:8px;background:var(--rojo);color:#fff;font-size:.68rem;font-weight:800;letter-spacing:.3px;padding:4px 8px;border-radius:999px;text-transform:uppercase}
+.producto .info{padding:10px 11px 12px;display:flex;flex-direction:column;flex:1}
+.producto h3{font-size:.95rem;font-weight:700;line-height:1.25}
+.producto p{font-size:.76rem;color:var(--texto-suave);margin:4px 0 10px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.fila{margin-top:auto;display:flex;align-items:center;justify-content:space-between;gap:6px}
+.precio{font-family:var(--f-titulo);font-weight:700;font-size:1.15rem;color:var(--dorado)}
+.contador{display:flex;align-items:center;gap:4px}
+.contador button{width:34px;height:34px;border-radius:50%;border:none;background:var(--grad-marca);color:#1A0E02;font-size:1.25rem;font-weight:800;line-height:1;box-shadow:0 3px 10px rgba(232,129,30,.35)}
+.contador button.menos{background:var(--tarjeta-2);color:var(--texto);box-shadow:none;border:1px solid var(--borde)}
+.contador span{min-width:18px;text-align:center;font-weight:800}
+
+/* ---------- Pie ---------- */
+footer{margin-top:44px;border-top:1px solid var(--borde);padding:28px 0 10px;text-align:center;color:var(--texto-suave);font-size:.85rem}
+footer .logo{width:70px;height:70px;margin:0 auto 10px;box-shadow:0 0 0 2px var(--dorado)}
+footer p{margin:4px 0}
+footer a{color:var(--dorado);font-weight:600;text-decoration:none}
+
+/* ---------- Barra del carrito ---------- */
+.barra{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:14px 16px calc(14px + env(safe-area-inset-bottom));background:linear-gradient(transparent,var(--fondo) 35%);transform:translateY(120%);transition:transform .25s}
+.barra.visible{transform:none}
+.barra button{width:100%;max-width:560px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;background:var(--grad-marca);color:#1A0E02;border:none;border-radius:var(--radio);padding:16px 20px;font-size:1rem;font-weight:800;box-shadow:0 8px 24px rgba(0,0,0,.6)}
+.pulso{animation:pulso .35s}
+@keyframes pulso{50%{transform:scale(1.03)}}
+
+/* ---------- Panel de pedido ---------- */
+.panel-fondo{position:fixed;inset:0;z-index:30;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center}
+.panel-fondo.abierto{display:flex}
+.panel{background:var(--tarjeta);width:100%;max-width:560px;max-height:92vh;overflow-y:auto;border-radius:20px 20px 0 0;padding:20px 16px calc(28px + env(safe-area-inset-bottom));border-top:2px solid var(--dorado)}
+@media(min-width:640px){.panel-fondo{align-items:center}.panel{border-radius:20px;border:1px solid var(--borde)}}
+.panel h2{font-family:var(--f-titulo);font-size:1.8rem;color:var(--dorado);margin:0 0 10px}
+.cerrar{float:right;background:none;border:none;color:var(--texto-suave);font-size:1.8rem;line-height:1}
+.resumen{margin-top:4px}
+.resumen li{list-style:none;display:grid;grid-template-columns:48px 1fr auto;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dashed var(--borde);font-size:.9rem;transition:opacity .2s}
+.resumen .mini{width:48px;height:48px;border-radius:10px;object-fit:cover;background:var(--tarjeta-2);display:grid;place-items:center;font-size:1.4rem}
+.resumen .nom{font-weight:700;line-height:1.25}
+.resumen .sub{display:block;font-family:var(--f-titulo);color:var(--dorado);font-weight:700;margin-top:2px}
+.resumen .acciones{display:flex;align-items:center;gap:6px}
+.resumen .contador button{width:30px;height:30px;font-size:1.1rem}
+.quitar{width:34px;height:34px;border-radius:50%;border:1px solid var(--borde);background:transparent;color:#FF9A8A;display:grid;place-items:center;margin-left:2px}
+.quitar:hover{background:rgba(210,54,31,.15);border-color:var(--rojo)}
+.quitar svg{width:17px;height:17px}
+.vaciar{background:none;border:none;color:var(--texto-suave);font-size:.8rem;text-decoration:underline;margin-top:8px;padding:4px 0}
+.total{display:flex;justify-content:space-between;font-weight:800;font-size:1.15rem;margin:12px 0 4px}
+.total span:last-child{font-family:var(--f-titulo);color:var(--dorado);font-size:1.4rem}
+.nota-chica{font-size:.78rem;color:var(--texto-suave)}
+form{margin-top:16px;display:grid;gap:12px}
+label{font-size:.82rem;font-weight:600;display:grid;gap:5px}
+input,select,textarea{width:100%;padding:12px;border-radius:12px;border:1px solid var(--borde);background:var(--fondo);color:var(--texto);font-family:inherit;font-size:16px}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--naranja);border-color:transparent}
+textarea{resize:vertical;min-height:64px}
+.opciones{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opciones label{display:flex;align-items:center;gap:8px;border:1px solid var(--borde);border-radius:12px;padding:12px;font-weight:700}
+.opciones label:has(input:checked){border-color:var(--naranja);background:rgba(232,129,30,.1)}
+.opciones input{width:auto;accent-color:var(--naranja)}
+.oculto{position:absolute;left:-9999px}   /* trampa anti-spam, no tocar */
+.btn{border:none;border-radius:var(--radio);padding:16px;font-size:1rem;font-weight:800;color:#1A0E02;background:var(--grad-marca);width:100%}
+.btn:disabled{opacity:.6}
+.btn-wa{background:var(--whatsapp);color:#fff;display:block;text-align:center;text-decoration:none;margin-top:12px}
+.btn-sec{background:var(--tarjeta-2);color:var(--texto);border:1px solid var(--borde);margin-top:10px}
+.error{color:#FF9A8A;font-size:.88rem;min-height:1.2em}
+.exito{text-align:center}
+.exito .grande{font-family:var(--f-titulo);font-size:3.4rem;color:var(--dorado);line-height:1}
+.exito h2{margin-top:6px}
+.precio-bs{display:block;font-size:.72rem;color:var(--texto-suave);font-weight:600;margin-top:1px}
+.producto.agotado .foto,.producto.agotado h3,.producto.agotado p{opacity:.45}
+.agotado-txt{font-size:.72rem;font-weight:800;color:#FF9A8A;text-transform:none;border:1px solid rgba(255,154,138,.5);border-radius:999px;padding:4px 9px}
+.total-bs{text-align:right;margin-top:-2px}
+.estado-pedido{margin-top:10px;background:var(--tarjeta-2);border:1px solid var(--borde);border-radius:12px;padding:10px}
+</style>
+</head>
+<body>
+
+<header class="portada">
+  <div class="contenedor">
+    <!-- ✏️ Logo: reemplaza img/logo.jpg por el archivo original en buena calidad si lo tienes -->
+    <img class="logo" src="img/logo.jpg" alt="Ocumare Food Hot">
+    <h1>Pide rico, <span>a cualquier hora</span></h1>
+    <p class="lema">Mi gente bella: hamburguesas, pepitos, parrillas y pescado frito, directo a tu puerta 🌴🔥</p>
+    <div class="chips">
+      <span class="chip vivo">Abierto 24/7</span>
+      <span class="chip">🛵 Delivery</span>
+      <span class="chip">📍 El Limón, Maracay</span>
+    </div>
+  </div>
+  <div class="linea-oro"></div>
+</header>
+
+<main class="contenedor">
+  <h2 class="seccion-titulo">Lo más pedido 🔥</h2>
+  <div class="carrusel-wrap">
+    <button class="flecha izq" type="button" aria-label="Anterior" id="flecha-izq">‹</button>
+    <div class="carrusel" id="destacados" aria-roledescription="carrusel"></div>
+    <button class="flecha der" type="button" aria-label="Siguiente" id="flecha-der">›</button>
+  </div>
+  <div class="puntos" id="puntos" aria-label="Elegir plato"></div>
+</main>
+
+<nav class="categorias" aria-label="Categorías"><div class="contenedor" id="nav"></div></nav>
+
+<div class="contenedor" id="menu"><p class="nota-chica" style="margin-top:24px">Cargando el menú…</p></div>
+
+<footer class="contenedor">
+  <img class="logo" src="img/logo.jpg" alt="" loading="lazy">
+  <!-- ✏️ Dirección, horario y redes -->
+  <p><strong class="oro">Ocumare Food Hot</strong> · Trabajamos 24 horas, los 7 días</p>
+  <p>📍 Coliseo, El Limón, diagonal a la pasarela, Maracay, Aragua</p>
+  <p>📲 <a id="link-wa" href="#" target="_blank" rel="noopener">WhatsApp 0424-315-71-34</a> · <a href="https://www.instagram.com/ocumarefoodhot/" target="_blank" rel="noopener">@ocumarefoodhot</a></p>
+</footer>
+
+<div class="barra" id="barra"><button type="button" id="btn-barra" onclick="abrirPanel()"><span id="barra-cant">Ver pedido</span><span id="barra-total"></span></button></div>
+
+<div class="panel-fondo" id="panel-fondo" onclick="if(event.target===this)cerrarPanel()">
+  <div class="panel" role="dialog" aria-modal="true" aria-labelledby="titulo-panel">
+    <button class="cerrar" type="button" onclick="cerrarPanel()" aria-label="Cerrar">×</button>
+    <div id="panel-contenido"></div>
+  </div>
+</div>
+
+<script>
+/* =====================================================================
+   ✏️ 3. CONFIGURACIÓN DEL LOCAL
+   ===================================================================== */
+const CONFIG = {
+  // Dirección del sistema Ocumare Food. Vacía = la web y el sistema están en el mismo servidor (lo normal).
+  // Solo si la web se publica aparte (p. ej. GitHub Pages), pon aquí la dirección del servidor: 'https://midominio.com'
+  API_URL: '',
+
+  NOMBRE: 'Ocumare Food Hot',
+  WHATSAPP: '584243157134',          // número del local, sin + ni espacios
+  MONEDA: '$',
+  NOTA_DELIVERY: 'El costo del delivery depende de tu zona y te lo confirmamos por WhatsApp.',
+  METODOS_PAGO: ['Pago Móvil', 'Efectivo ($)', 'Efectivo (Bs)', 'Punto de venta al recibir', 'Zelle'],
+};
+
+
+/* =====================================================================
+   A partir de aquí no hace falta cambiar nada.
+   ===================================================================== */
+const EMOJI = {'Hamburguesas':'🍔','Perros y pepitos':'🌭','Pollo':'🍗','Parrillas':'🥩','Pescados y mariscos':'🐟','Pastas y risottos':'🍝','Ensaladas':'🥗','Sopas':'🍲','Almuerzos':'🍛'};
+let MENU = [];
+let carrito = leerCarrito();   // { idProducto: cantidad }
+
+const $ = (id) => document.getElementById(id);
+const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const dinero = (n) => CONFIG.MONEDA + (Number(n) % 1 ? Number(n).toFixed(2) : Number(n));
+const bolivares = (n) => 'Bs ' + Number(n).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const slug = (t) => 'cat-' + String(t).toLowerCase().normalize('NFD').replace(/[^a-z0-9]+/g, '-');
+
+function leerCarrito(){ try { return JSON.parse(localStorage.getItem('carrito-ocumare') || '{}'); } catch { return {}; } }
+function guardarCarrito(){ try { localStorage.setItem('carrito-ocumare', JSON.stringify(carrito)); } catch {} }
+
+const API = CONFIG.API_URL.replace(/\/$/, '') + '/api';
+let TASA = null;   // Bs por dólar, si el local la cargó
+
+// La carta viene del sistema del local: lo que el gerente cambia (precios, agotados, destacados) se ve aquí.
+async function cargarMenu(){
+  $('link-wa').href = 'https://wa.me/' + CONFIG.WHATSAPP;
+  try {
+    const r = await fetch(API + '/menu');
+    if (!r.ok) throw new Error('menu ' + r.status);
+    const datos = await r.json();
+    TASA = datos.tasaBsPorUsd;
+    MENU = datos.categorias.flatMap(c => c.productos.map(p => ({
+      id: String(p.id), categoria: c.nombre, nombre: p.nombre, descripcion: p.descripcion || '',
+      precio: Number(p.precioUsd), precioBs: p.precioBs, imagen: p.imagenUrl || '',
+      destacado: p.destacado, disponible: p.disponible,
+    })));
+    pintarMenu();
+  } catch (e) {
+    $('menu').innerHTML = '<p class="error" style="margin-top:24px">No pudimos cargar el menú. Revisa tu conexión o pide directo por <a href="https://wa.me/' + CONFIG.WHATSAPP + '">WhatsApp</a>.</p>';
+  }
+}
+
+function foto(p, clase){
+  return p.imagen
+    ? `<img src="${esc(p.imagen)}" alt="${esc(p.nombre)}" loading="lazy" width="640" height="640" onerror="sinFoto(this)">`
+    : `<div class="sin-foto"><div><span>${EMOJI[p.categoria] || '🍽️'}</span>${esc(p.nombre)}</div></div>`;
+}
+
+// Si una foto no carga (falta el archivo en img/), se muestra el plato con su ícono.
+function sinFoto(img){
+  const p = MENU.find(x => x.nombre === img.alt);
+  const div = document.createElement('div');
+  div.className = 'sin-foto';
+  div.innerHTML = `<div><span>${EMOJI[p && p.categoria] || '🍽️'}</span>${esc(img.alt)}</div>`;
+  img.replaceWith(div);
+}
+
+function pintarMenu(){
+  Object.keys(carrito).forEach(id => { const p = MENU.find(x => String(x.id) === id); if (!p || !p.disponible) delete carrito[id]; });
+
+  const top = MENU.filter(p => p.destacado);
+  $('destacados').innerHTML = top.map(p => `
+    <article class="top">
+      ${foto(p)}
+      <div class="info">
+        <div><h3>${esc(p.nombre)}</h3><span class="precio">${dinero(p.precio)}</span>${p.precioBs != null ? `<span class="precio-bs">${bolivares(p.precioBs)}</span>` : ''}</div>
+        <div class="contador" data-ctr="${esc(p.id)}"></div>
+      </div>
+    </article>`).join('');
+  $('destacados').closest('main').style.display = top.length ? '' : 'none';
+  prepararCarrusel();
+
+  const categorias = [...new Set(MENU.map(p => p.categoria || 'Otros'))];
+  $('nav').innerHTML = categorias.map(c => `<a href="#${slug(c)}">${EMOJI[c] || ''} ${esc(c)}</a>`).join('');
+  $('menu').innerHTML = categorias.map(c => `
+    <section id="${slug(c)}">
+      <h2 class="seccion-titulo">${esc(c)}</h2>
+      <div class="grilla">
+        ${MENU.filter(p => (p.categoria || 'Otros') === c).map(p => `
+          <article class="producto${p.disponible ? '' : ' agotado'}" data-prod="${esc(p.id)}">
+            <div class="foto">${foto(p)}${p.destacado ? '<span class="badge">🔥 Top</span>' : ''}</div>
+            <div class="info">
+              <h3>${esc(p.nombre)}</h3>
+              <p>${esc(p.descripcion)}</p>
+              <div class="fila">
+                <span><span class="precio">${dinero(p.precio)}</span>${p.precioBs != null ? `<span class="precio-bs">${bolivares(p.precioBs)}</span>` : ''}</span>
+                <div class="contador" data-ctr="${esc(p.id)}"></div>
+              </div>
+            </div>
+          </article>`).join('')}
+      </div>
+    </section>`).join('');
+  MENU.forEach(p => pintarContador(p.id));
+  actualizarBarra(false);
+  observarCategorias();
+}
+
+
+/* ---------- Carrusel "Lo más pedido" ----------
+   Celular: se desliza con el dedo. Computador: flechas, puntos o arrastrar con el mouse.
+   Avanza solo cada 4 s y se detiene en cuanto la persona lo toca. */
+const car = { listo: false, auto: null, pausado: false };
+
+function tarjetasCarrusel(){ return [...$('destacados').querySelectorAll('.top')]; }
+function pasoCarrusel(){ const t = tarjetasCarrusel(); return t.length > 1 ? t[1].offsetLeft - t[0].offsetLeft : $('destacados').clientWidth; }
+function indiceCarrusel(){ return Math.round($('destacados').scrollLeft / pasoCarrusel()); }
+function irACarrusel(i){
+  const c = $('destacados'), max = c.scrollWidth - c.clientWidth;
+  c.scrollTo({ left: Math.max(0, Math.min(max, i * pasoCarrusel())), behavior: 'smooth' });
+}
+function actualizarCarrusel(){
+  const c = $('destacados'), max = c.scrollWidth - c.clientWidth - 4;
+  $('flecha-izq').disabled = c.scrollLeft <= 4;
+  $('flecha-der').disabled = c.scrollLeft >= max;
+  const total = tarjetasCarrusel().length, visibles = Math.max(1, Math.round(c.clientWidth / pasoCarrusel()));
+  const paginas = Math.max(1, total - visibles + 1);
+  const puntos = $('puntos');
+  if (puntos.children.length !== paginas) {
+    puntos.innerHTML = Array.from({ length: paginas }, (_, i) => `<button type="button" aria-label="Ir al plato ${i + 1}" data-punto="${i}"></button>`).join('');
+  }
+  puntos.style.display = paginas > 1 ? '' : 'none';
+  const actual = c.scrollLeft >= max ? paginas - 1 : Math.min(indiceCarrusel(), paginas - 1);
+  [...puntos.children].forEach((b, i) => b.classList.toggle('activo', i === actual));
+}
+function pararAuto(){ car.pausado = true; clearInterval(car.auto); }
+function iniciarAuto(){
+  clearInterval(car.auto);
+  if (car.pausado || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  car.auto = setInterval(() => {
+    const c = $('destacados');
+    if (c.scrollLeft >= c.scrollWidth - c.clientWidth - 4) irACarrusel(0); else irACarrusel(indiceCarrusel() + 1);
+  }, 4000);
+}
+
+function prepararCarrusel(){
+  const c = $('destacados');
+  if (!car.listo) {
+    car.listo = true;
+    $('flecha-izq').addEventListener('click', () => { pararAuto(); irACarrusel(indiceCarrusel() - 1); });
+    $('flecha-der').addEventListener('click', () => { pararAuto(); irACarrusel(indiceCarrusel() + 1); });
+    $('puntos').addEventListener('click', e => { const b = e.target.closest('[data-punto]'); if (b) { pararAuto(); irACarrusel(Number(b.dataset.punto)); } });
+    c.addEventListener('scroll', () => requestAnimationFrame(actualizarCarrusel), { passive: true });
+    c.addEventListener('touchstart', pararAuto, { passive: true });
+    c.addEventListener('mouseenter', () => clearInterval(car.auto));
+    c.addEventListener('mouseleave', iniciarAuto);
+    window.addEventListener('resize', actualizarCarrusel);
+
+    // Arrastrar con el mouse (en celular el dedo ya funciona de forma nativa)
+    let x0 = 0, s0 = 0, movio = false, activo = false;
+    c.addEventListener('pointerdown', e => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return;
+      activo = true; movio = false; x0 = e.clientX; s0 = c.scrollLeft; pararAuto();
+    });
+    window.addEventListener('pointermove', e => {
+      if (!activo) return;
+      const dx = e.clientX - x0;
+      if (!movio && Math.abs(dx) > 5) { movio = true; c.classList.add('arrastrando'); }
+      if (movio) c.scrollLeft = s0 - dx;
+    });
+    window.addEventListener('pointerup', () => {
+      if (!activo) return;
+      activo = false;
+      if (movio) { c.classList.remove('arrastrando'); irACarrusel(indiceCarrusel()); }
+    });
+    // Si fue un arrastre, que no cuente como toque en el botón "+"
+    c.addEventListener('click', e => { if (movio) { e.stopPropagation(); e.preventDefault(); movio = false; } }, true);
+    iniciarAuto();
+  }
+  requestAnimationFrame(actualizarCarrusel);
+}
+
+function pintarContador(id){
+  const prod = MENU.find(p => String(p.id) === String(id));
+  if (prod && !prod.disponible) {
+    delete carrito[id];
+    document.querySelectorAll(`[data-ctr="${CSS.escape(id)}"]`).forEach(c => { c.innerHTML = '<span class="agotado-txt">Agotado</span>'; });
+    return;
+  }
+  const cant = carrito[id] || 0;
+  document.querySelectorAll(`[data-ctr="${CSS.escape(id)}"]`).forEach(cont => {
+    cont.innerHTML = cant
+      ? `<button class="menos" type="button" aria-label="Quitar uno" data-id="${esc(id)}" data-d="-1">−</button><span>${cant}</span><button type="button" aria-label="Agregar uno" data-id="${esc(id)}" data-d="1">+</button>`
+      : `<button type="button" aria-label="Agregar" data-id="${esc(id)}" data-d="1">+</button>`;
+  });
+  const card = document.querySelector(`[data-prod="${CSS.escape(id)}"]`);
+  if (card) card.classList.toggle('en-carrito', cant > 0);
+}
+
+document.addEventListener('click', (e) => {
+  const quitar = e.target.closest('button[data-quitar]');
+  if (quitar) {
+    const id = quitar.dataset.quitar;
+    delete carrito[id]; claveEnvio = null;
+    guardarCarrito(); pintarContador(id); actualizarBarra(false); pintarResumen();
+    return;
+  }
+  if (e.target.closest('button[data-vaciar]')) {
+    const ids = Object.keys(carrito);
+    carrito = {};
+    guardarCarrito(); ids.forEach(pintarContador); actualizarBarra(false); pintarResumen();
+    return;
+  }
+  const b = e.target.closest('button[data-id]');
+  if (!b) return;
+  const id = b.dataset.id, delta = Number(b.dataset.d);
+  const nueva = Math.max(0, Math.min(30, (carrito[id] || 0) + delta));
+  if (nueva) carrito[id] = nueva; else delete carrito[id];
+  claveEnvio = null;
+  guardarCarrito(); pintarContador(id); actualizarBarra(delta > 0);
+  if ($('panel-fondo').classList.contains('abierto')) pintarResumen();
+});
+
+function lineasCarrito(){
+  return Object.entries(carrito).map(([id, cant]) => {
+    const p = MENU.find(x => String(x.id) === id);
+    return p ? { ...p, cantidad: cant, subtotal: p.precio * cant } : null;
+  }).filter(Boolean);
+}
+
+function actualizarBarra(animar){
+  const lineas = lineasCarrito();
+  const unidades = lineas.reduce((s, l) => s + l.cantidad, 0);
+  const total = lineas.reduce((s, l) => s + l.subtotal, 0);
+  $('barra').classList.toggle('visible', unidades > 0);
+  $('barra-cant').textContent = `🛒 Ver pedido (${unidades})`;
+  $('barra-total').textContent = dinero(total.toFixed(2)) + (TASA ? ' · ' + bolivares(total * TASA) : '');
+  if (animar) { const b = $('btn-barra'); b.classList.remove('pulso'); void b.offsetWidth; b.classList.add('pulso'); }
+}
+
+/* ---------- Navegación entre categorías ----------
+   - Al tocar una categoría se hace UN solo desplazamiento de la página hasta la sección.
+   - Mientras ese desplazamiento ocurre, el resaltado no se recalcula (así no lo interrumpe).
+   - La barra de categorías solo se mueve de lado (nunca mueve la página). */
+let navegando = false, finNavegacion = null;
+const altoNav = () => document.querySelector('nav.categorias').offsetHeight;
+
+function marcarCategoria(id){
+  const cont = $('nav');
+  cont.querySelectorAll('a').forEach(a => {
+    const on = a.getAttribute('href') === '#' + id;
+    if (on && !a.classList.contains('activa')) {
+      cont.scrollTo({ left: a.offsetLeft - (cont.clientWidth - a.offsetWidth) / 2, behavior: 'smooth' });
+    }
+    a.classList.toggle('activa', on);
+  });
+}
+
+function seccionActual(){
+  const limite = altoNav() + 24;
+  let actual = null;
+  document.querySelectorAll('#menu section').forEach(s => { if (s.getBoundingClientRect().top <= limite) actual = s; });
+  return actual;
+}
+
+function terminarNavegacion(){ navegando = false; clearTimeout(finNavegacion); actualizarResaltado(); }
+
+function actualizarResaltado(){
+  if (navegando) return;
+  const s = seccionActual();
+  if (s) marcarCategoria(s.id);
+  else $('nav').querySelectorAll('a').forEach(a => a.classList.remove('activa'));
+}
+
+function observarCategorias(){
+  $('nav').querySelectorAll('a').forEach(a => a.addEventListener('click', (e) => {
+    e.preventDefault();
+    const id = a.getAttribute('href').slice(1);
+    const destino = document.getElementById(id);
+    if (!destino) return;
+    navegando = true;
+    marcarCategoria(id);
+    const y = destino.getBoundingClientRect().top + window.scrollY - altoNav() - 8;
+    window.scrollTo({ top: y, behavior: 'smooth' });
+    clearTimeout(finNavegacion);
+    finNavegacion = setTimeout(terminarNavegacion, 1500);   // respaldo si el navegador no avisa 'scrollend'
+  }));
+  actualizarResaltado();
+}
+
+let pendiente = false;
+window.addEventListener('scroll', () => {
+  if (pendiente) return;
+  pendiente = true;
+  requestAnimationFrame(() => { pendiente = false; actualizarResaltado(); });
+}, { passive: true });
+window.addEventListener('scrollend', () => { if (navegando) terminarNavegacion(); });
+// Si la persona toca la pantalla mientras la página se mueve sola, le devolvemos el control
+['touchstart', 'wheel'].forEach(ev => window.addEventListener(ev, () => { if (navegando) terminarNavegacion(); }, { passive: true }));
+
+const ICONO_BASURA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v6M14 11v6"/></svg>';
+
+// Lista editable del carrito dentro del panel: cambiar cantidades o quitar platos
+// sin salir del formulario (lo que la persona ya escribió no se pierde).
+function pintarResumen(){
+  const cont = $('resumen-pedido');
+  if (!cont) return;
+  const lineas = lineasCarrito();
+  if (!lineas.length) { cerrarPanel(); return; }
+  const total = lineas.reduce((s, l) => s + l.subtotal, 0);
+  cont.innerHTML = `
+    <ul class="resumen">${lineas.map(l => `
+      <li data-linea="${esc(l.id)}">
+        ${l.imagen ? `<img class="mini" src="${esc(l.imagen)}" alt="">` : `<span class="mini">${EMOJI[l.categoria] || '🍽️'}</span>`}
+        <div><span class="nom">${esc(l.nombre)}</span><span class="sub">${dinero(l.subtotal.toFixed(2))}</span></div>
+        <div class="acciones">
+          <div class="contador" data-ctr="${esc(l.id)}"></div>
+          <button class="quitar" type="button" data-quitar="${esc(l.id)}" aria-label="Quitar ${esc(l.nombre)} del pedido" title="Quitar">${ICONO_BASURA}</button>
+        </div>
+      </li>`).join('')}</ul>
+    <button class="vaciar" type="button" data-vaciar>Vaciar pedido</button>
+    <div class="total"><span>Total</span><span>${dinero(total.toFixed(2))}</span></div>
+    ${TASA ? `<p class="nota-chica total-bs">${bolivares(total * TASA)} a la tasa de hoy</p>` : ''}`;
+  lineas.forEach(l => pintarContador(l.id));
+}
+
+function abrirPanel(){
+  $('panel-contenido').innerHTML = `
+    <h2 id="titulo-panel">Tu pedido</h2>
+    <div id="resumen-pedido"></div>
+    <p class="nota-chica">${esc(CONFIG.NOTA_DELIVERY)}</p>
+    <form id="form" onsubmit="enviarPedido(event)">
+      <label>Nombre<input name="nombre" required maxlength="60" autocomplete="name"></label>
+      <label>Teléfono (WhatsApp)<input name="telefono" required inputmode="tel" minlength="7" maxlength="20" placeholder="Ej: 0424 1234567 · otro país: +57 300…" autocomplete="tel"></label>
+      <div class="opciones">
+        <label><input type="radio" name="entrega" value="delivery" checked onchange="toggleDireccion()"> 🛵 Delivery</label>
+        <label><input type="radio" name="entrega" value="retiro" onchange="toggleDireccion()"> 🏪 Retiro</label>
+      </div>
+      <label id="campo-direccion">Dirección y punto de referencia<textarea name="direccion" maxlength="200" required placeholder="Sector, calle, casa y una referencia"></textarea></label>
+      <label>Forma de pago<select name="pago" required>${CONFIG.METODOS_PAGO.map(m => `<option>${esc(m)}</option>`).join('')}</select></label>
+      <label>Notas (opcional)<textarea name="notas" maxlength="300" placeholder="Sin cebolla, salsa aparte, carne o pollo…"></textarea></label>
+      <input class="oculto" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+      <p class="error" id="error"></p>
+      <button class="btn" id="btn-enviar" type="submit">Enviar pedido 🔥</button>
+    </form>`;
+  pintarResumen();
+  $('panel-fondo').classList.add('abierto');
+}
+function cerrarPanel(){ $('panel-fondo').classList.remove('abierto'); }
+
+function toggleDireccion(){
+  const esDelivery = document.querySelector('input[name=entrega]:checked').value === 'delivery';
+  $('campo-direccion').style.display = esDelivery ? '' : 'none';
+  $('campo-direccion').querySelector('textarea').required = esDelivery;
+}
+
+let enviando = false;      // evita pedidos duplicados por doble clic o Enter repetido
+let claveEnvio = null;     // misma clave en los reintentos: si el primer intento sí llegó, no se duplica
+
+async function enviarPedido(ev){
+  ev.preventDefault();
+  if (enviando) return;
+  enviando = true;
+  const f = new FormData(ev.target);
+  if (!claveEnvio) claveEnvio = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now() + '-' + Math.random().toString(36).slice(2);
+  const entrega = f.get('entrega');
+  const pedido = {
+    claveExterna: claveEnvio,
+    clienteNombre: f.get('nombre'), clienteTelefono: f.get('telefono'),
+    entrega: entrega === 'delivery' ? 'DELIVERY' : 'RETIRO',
+    direccionEntrega: entrega === 'delivery' ? f.get('direccion') : null,
+    pago: f.get('pago'), notas: f.get('notas'), website: f.get('website'),
+    items: Object.entries(carrito).map(([id, cantidad]) => ({ productoId: Number(id), cantidad })),
+  };
+  const lineas = lineasCarrito();
+  const btn = $('btn-enviar');
+  btn.disabled = true; btn.textContent = 'Enviando…'; $('error').textContent = '';
+
+  try {
+    let resp, r;
+    const corte = new AbortController();
+    const reloj = setTimeout(() => corte.abort(), 30000);
+    try {
+      // La misma clave en cada intento: si el primero sí llegó, el sistema no lo duplica.
+      resp = await fetch(API + '/web/pedidos', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pedido), signal: corte.signal,
+      });
+      r = await resp.json().catch(() => null);
+    } catch (x) {
+      throw new Error('No pudimos conectarnos. Revisa tu internet e intenta de nuevo (tu pedido no se duplicará).');
+    } finally { clearTimeout(reloj); }
+    if (!resp.ok) throw new Error((r && r.mensaje) || 'No se pudo registrar el pedido.');
+    mostrarExito(r, pedido, lineas);
+    carrito = {}; claveEnvio = null; guardarCarrito(); pintarMenu();
+  } catch (e) {
+    const msg = e.message.trim();
+    $('error').textContent = msg + (/[.!?]$/.test(msg) ? '' : '.') + ' Si el problema sigue, pide por WhatsApp.';
+    btn.disabled = false; btn.textContent = 'Enviar pedido 🔥';
+  } finally {
+    enviando = false;
+  }
+}
+
+// Escape cierra el panel del pedido (teclado / computador)
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && $('panel-fondo').classList.contains('abierto')) cerrarPanel(); });
+
+const ESTADO_CLIENTE = {
+  ABIERTO: 'Recibido, en cola',
+  EN_PREPARACION: 'En la cocina 🔥',
+  LISTO: entregaTxt => entregaTxt === 'DELIVERY' ? 'Listo, saliendo pronto 🛵' : 'Listo para retirar 🏪',
+  ENTREGADO: 'Entregado',
+  PAGADO: 'Entregado y pagado. ¡Buen provecho!',
+  ANULADO: 'Anulado. Escríbenos por WhatsApp',
+};
+let seguimiento = null;
+
+function mostrarExito(r, pedido, lineas){
+  const detalle = lineas.map(l => `${l.cantidad} x ${l.nombre}`).join('\n');
+  const totalTxt = dinero(Number(r.totalUsd).toFixed(2)) + (r.totalBs != null ? ` (${bolivares(r.totalBs)})` : '');
+  const texto = `Hola ${CONFIG.NOMBRE}! 👋 Acabo de hacer el pedido #${r.numero} a nombre de ${pedido.clienteNombre}.\n${detalle}\nTotal: ${totalTxt} · Pago: ${pedido.pago}`;
+  $('panel-contenido').innerHTML = `
+    <div class="exito">
+      <p class="nota-chica">Tu número de pedido</p>
+      <p class="grande">#${esc(r.numero)}</p>
+      <h2>¡Pedido recibido! 🌴🔥</h2>
+      <p>Total: <strong class="oro">${esc(totalTxt)}</strong></p>
+      <p class="estado-pedido" aria-live="polite">Estado: <strong id="estado-pedido">${esc(textoEstado(r.estado, pedido.entrega))}</strong></p>
+      <p class="nota-chica" style="margin-top:8px">Ya le llegó al equipo. Te escribimos al WhatsApp que dejaste para confirmar ${pedido.entrega === 'DELIVERY' ? 'el delivery y ' : ''}el pago.</p>
+      <a class="btn btn-wa" target="_blank" rel="noopener" href="https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(texto)}">Enviar comprobante por WhatsApp</a>
+      <button class="btn btn-sec" type="button" onclick="cerrarPanel()">Seguir viendo el menú</button>
+    </div>`;
+  seguirPedido(pedido.claveExterna, pedido.entrega);
+}
+
+function textoEstado(estado, entrega){
+  const t = ESTADO_CLIENTE[estado];
+  return typeof t === 'function' ? t(entrega) : (t || estado);
+}
+
+// Consulta cada 20 s cómo va el pedido mientras la pantalla de éxito está abierta.
+// Al volver a la pestaña también se actualiza enseguida.
+let consultarEstado = null;
+function seguirPedido(clave, entrega){
+  clearInterval(seguimiento);
+  consultarEstado = async () => {
+    const el = $('estado-pedido');
+    if (!el) { clearInterval(seguimiento); return; }
+    if (document.visibilityState !== 'visible') return;
+    try {
+      const r = await fetch(API + '/web/pedidos/' + encodeURIComponent(clave));
+      if (!r.ok) return;
+      const d = await r.json();
+      el.textContent = textoEstado(d.estado, entrega);
+      if (d.estado === 'PAGADO' || d.estado === 'ANULADO') clearInterval(seguimiento);
+    } catch { /* sin conexión: se reintenta en el próximo ciclo */ }
+  };
+  seguimiento = setInterval(consultarEstado, 20000);
+}
+document.addEventListener('visibilitychange', () => { if (consultarEstado) consultarEstado(); });
+
+cargarMenu();
+</script>
+</body>
+</html>
