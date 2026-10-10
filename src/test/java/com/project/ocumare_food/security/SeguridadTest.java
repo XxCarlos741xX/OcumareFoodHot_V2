@@ -8,13 +8,17 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import jakarta.servlet.http.Cookie;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -33,12 +37,17 @@ class SeguridadTest {
                 .passwordHash(encoder.encode("clave-segura-1")).rol(rol).activo(activo).build());
     }
 
-    private String login(String username, String password) throws Exception {
-        String json = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+    private Cookie loginCookie(String username, String password) throws Exception {
+        Cookie c = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}"))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString();
-        return "Bearer " + JsonPath.read(json, "$.token");
+                .andReturn().getResponse().getCookie("ocumare_sesion");
+        assertThat(c).isNotNull();
+        return c;
+    }
+
+    private String login(String username, String password) throws Exception {
+        return "Bearer " + loginCookie(username, password).getValue();
     }
 
     private String nuevoUsuarioJson(String username, String rol) {
@@ -158,5 +167,146 @@ class SeguridadTest {
                 .andExpect(status().isForbidden());
         mvc.perform(get("/api/dashboard/hoy").header("Authorization", token))
                 .andExpect(status().isForbidden());
+    }
+
+    // -------------------- Sesión en cookie --------------------
+
+    @Test
+    void elLoginEntregaUnaCookieHttpOnlyYNoDevuelveElToken() throws Exception {
+        var r = mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"admin\",\"password\":\"admin123\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").doesNotExist())
+                .andExpect(jsonPath("$.usuario.username").value("admin"))
+                .andExpect(jsonPath("$.expiraEn").exists())
+                .andReturn().getResponse();
+        String setCookie = r.getHeader("Set-Cookie");
+        assertThat(setCookie).contains("ocumare_sesion=").contains("HttpOnly").contains("SameSite=Strict").contains("Path=/api");
+    }
+
+    @Test
+    void laCookieSirveSinEncabezadoYSalirLaBorra() throws Exception {
+        Cookie c = loginCookie("admin", "admin123");
+        mvc.perform(get("/api/auth/yo").cookie(c)).andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("admin"));
+        String borrar = mvc.perform(post("/api/auth/salir").cookie(c))
+                .andExpect(status().isNoContent()).andReturn().getResponse().getHeader("Set-Cookie");
+        assertThat(borrar).contains("ocumare_sesion=").contains("Max-Age=0");
+    }
+
+    @Test
+    void unaCookieVencidaNoRompeLasRutasPublicas() throws Exception {
+        Cookie basura = new Cookie("ocumare_sesion", "token.vencido.xyz");
+        mvc.perform(get("/api/menu").cookie(basura)).andExpect(status().isOk());
+        mvc.perform(post("/api/auth/login").cookie(basura).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"admin\",\"password\":\"admin123\"}"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/auth/yo").cookie(basura)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void desactivarAUnMeseroLoSacaEnSuSiguientePeticion() throws Exception {
+        crearEnBase("mesero-sale", Rol.MESERO, true);
+        String tokenMesero = login("mesero-sale", "clave-segura-1");
+        String tokenAdmin = login("admin", "admin123");
+        long id = usuarios.findByUsername("mesero-sale").orElseThrow().getId();
+        mvc.perform(get("/api/auth/yo").header("Authorization", tokenMesero)).andExpect(status().isOk());
+
+        mvc.perform(put("/api/usuarios/" + id).header("Authorization", tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"activo\":false}"))
+                .andExpect(status().isOk());
+        mvc.perform(get("/api/auth/yo").header("Authorization", tokenMesero)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void cambiarElRolORestablecerLaClaveCierraLasSesionesViejas() throws Exception {
+        crearEnBase("gerente-baja", Rol.GERENTE, true);
+        String tokenAdmin = login("admin", "admin123");
+        long id = usuarios.findByUsername("gerente-baja").orElseThrow().getId();
+
+        String viejo = login("gerente-baja", "clave-segura-1");
+        mvc.perform(put("/api/usuarios/" + id).header("Authorization", tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"rol\":\"MESERO\"}"))
+                .andExpect(status().isOk());
+        // Con el token viejo ya no puede usar permisos de gerente (ni nada)
+        mvc.perform(get("/api/usuarios").header("Authorization", viejo)).andExpect(status().isUnauthorized());
+
+        String otro = login("gerente-baja", "clave-segura-1");
+        mvc.perform(put("/api/usuarios/" + id + "/password").header("Authorization", tokenAdmin)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"passwordNueva\":\"clave-nueva-22\"}"))
+                .andExpect(status().isNoContent());
+        mvc.perform(get("/api/auth/yo").header("Authorization", otro)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void cambiarLaClavePropiaDaUnaSesionNuevaYAnulaLaVieja() throws Exception {
+        crearEnBase("cambia-clave", Rol.MESERO, true);
+        String viejo = login("cambia-clave", "clave-segura-1");
+        Cookie nueva = mvc.perform(put("/api/auth/password").header("Authorization", viejo)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"passwordActual\":\"clave-segura-1\",\"passwordNueva\":\"clave-nueva-33\"}"))
+                .andExpect(status().isNoContent()).andReturn().getResponse().getCookie("ocumare_sesion");
+        assertThat(nueva).isNotNull();
+        mvc.perform(get("/api/auth/yo").header("Authorization", viejo)).andExpect(status().isUnauthorized());
+        mvc.perform(get("/api/auth/yo").cookie(nueva)).andExpect(status().isOk());
+    }
+
+    @Test
+    void elBloqueoPorIntentosEsPorIpYNoDejaFueraAlLocal() throws Exception {
+        crearEnBase("cajera", Rol.MESERO, true);
+        for (int i = 0; i < 5; i++) {
+            mvc.perform(post("/api/auth/login").with(r -> { r.setRemoteAddr("203.0.113.9"); return r; })
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"username\":\"cajera\",\"password\":\"mala\"}"))
+                    .andExpect(status().isUnauthorized());
+        }
+        // El atacante queda bloqueado…
+        mvc.perform(post("/api/auth/login").with(r -> { r.setRemoteAddr("203.0.113.9"); return r; })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"cajera\",\"password\":\"clave-segura-1\"}"))
+                .andExpect(status().isTooManyRequests());
+        // …pero la cajera entra normal desde el local
+        mvc.perform(post("/api/auth/login").with(r -> { r.setRemoteAddr("198.51.100.20"); return r; })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"cajera\",\"password\":\"clave-segura-1\"}"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void elLoginRechazaDatosGigantes() throws Exception {
+        String largo = "x".repeat(200);
+        mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"username\":\"" + largo + "\",\"password\":\"" + largo + "\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    // -------------------- Cabeceras de seguridad --------------------
+
+    @Test
+    void lasPaginasYLaApiLlevanCabecerasDeSeguridad() throws Exception {
+        for (String url : new String[]{"/", "/pos/", "/api/menu"}) {
+            mvc.perform(get(url))
+                    .andExpect(header().string("Content-Security-Policy", org.hamcrest.Matchers.containsString("script-src 'self'")))
+                    .andExpect(header().string("Content-Security-Policy", org.hamcrest.Matchers.containsString("frame-ancestors 'none'")))
+                    .andExpect(header().string("X-Content-Type-Options", "nosniff"))
+                    .andExpect(header().string("Referrer-Policy", "strict-origin-when-cross-origin"))
+                    .andExpect(header().exists("Permissions-Policy"));
+        }
+    }
+
+    @Test
+    void porHttpsSeExigeHttpsEnLasSiguientesVisitas() throws Exception {
+        mvc.perform(get("/api/menu").secure(true))
+                .andExpect(header().string("Strict-Transport-Security", org.hamcrest.Matchers.containsString("max-age=31536000")));
+    }
+
+    @Test
+    void laPaginaPublicaNoTieneScriptsNiEventosEnLinea() throws Exception {
+        String html = new String(getClass().getResourceAsStream("/static/index.html").readAllBytes(),
+                java.nio.charset.StandardCharsets.UTF_8);
+        // Con la CSP "script-src 'self'" cualquier script en línea dejaría la página sin funcionar.
+        assertThat(html).doesNotContainPattern("<script>|<script(?![^>]*\\bsrc=)[^>]*>");
+        assertThat(html).doesNotContainPattern("\\son[a-z]+\\s*=\\s*[\"']");
+        assertThat(html).contains("<script src=\"js/web.js\"");
     }
 }

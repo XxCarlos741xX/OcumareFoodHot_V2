@@ -68,9 +68,12 @@ public class UsuarioService {
         if (esSiMismo && req.rol() != null && req.rol() != u.getRol()) {
             throw ErrorNegocio.invalido("No puedes cambiar tu propio rol");
         }
+        boolean cambiaRol = req.rol() != null && req.rol() != u.getRol();
+        boolean seDesactiva = req.activo() != null && !req.activo() && u.isActivo();
         if (req.nombre() != null && !req.nombre().isBlank()) u.setNombre(req.nombre().trim());
         if (req.rol() != null) u.setRol(req.rol());
         if (req.activo() != null) u.setActivo(req.activo());
+        if (cambiaRol || seDesactiva) u.cerrarSesiones();   // su token viejo deja de servir ya
         return UsuarioResponse.de(u);
     }
 
@@ -82,16 +85,22 @@ public class UsuarioService {
             throw ErrorNegocio.prohibido("Un gerente solo puede cambiar la clave de meseros");
         }
         u.setPasswordHash(encoder.encode(req.passwordNueva()));
+        u.cerrarSesiones();
     }
 
-    /** Cualquier usuario cambia su propia clave, confirmando la actual. */
+    /**
+     * Cualquier usuario cambia su propia clave, confirmando la actual. Cierra sus sesiones en los otros
+     * equipos; devuelve el usuario actualizado para darle una sesión nueva en este.
+     */
     @Transactional
-    public void cambiarPasswordPropia(PasswordRequest req, UsuarioActual actor) {
+    public Usuario cambiarPasswordPropia(PasswordRequest req, UsuarioActual actor) {
         Usuario u = usuarios.findById(actor.id()).orElseThrow(() -> ErrorNegocio.noEncontrado("Usuario no encontrado"));
         if (req.passwordActual() == null || !encoder.matches(req.passwordActual(), u.getPasswordHash())) {
             throw ErrorNegocio.invalido("La contraseña actual no es correcta");
         }
         u.setPasswordHash(encoder.encode(req.passwordNueva()));
+        u.cerrarSesiones();
+        return usuarios.saveAndFlush(u);
     }
 
     @Transactional(readOnly = true)

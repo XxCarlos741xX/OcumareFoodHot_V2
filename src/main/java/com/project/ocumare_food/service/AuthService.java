@@ -1,8 +1,6 @@
 package com.project.ocumare_food.service;
 
 import com.project.ocumare_food.dto.LoginRequest;
-import com.project.ocumare_food.dto.LoginResponse;
-import com.project.ocumare_food.dto.UsuarioResponse;
 import com.project.ocumare_food.exception.ErrorNegocio;
 import com.project.ocumare_food.model.Usuario;
 import com.project.ocumare_food.repository.UsuarioRepository;
@@ -33,21 +31,29 @@ public class AuthService {
         this.limite = limite;
     }
 
-    public LoginResponse login(LoginRequest req) {
+    /** Resultado del login: el token va a la cookie; el usuario y el vencimiento, a la respuesta. */
+    public record Sesion(TokenService.TokenEmitido token, Usuario usuario) {
+    }
+
+    /**
+     * El bloqueo por intentos fallidos cuenta por usuario Y por IP: así un extraño no puede dejar
+     * al administrador sin entrar desde el local escribiendo 5 claves malas desde su casa.
+     */
+    public Sesion login(LoginRequest req, String ip) {
         String username = req.username().trim();
-        if (limite.estaBloqueado(username)) {
+        String clave = username + "@" + (ip == null ? "" : ip);
+        if (limite.estaBloqueado(clave)) {
             throw new ErrorNegocio(HttpStatus.TOO_MANY_REQUESTS,
                     "Demasiados intentos fallidos. Espera 5 minutos e intenta de nuevo.");
         }
         try {
             authManager.authenticate(new UsernamePasswordAuthenticationToken(username, req.password()));
         } catch (AuthenticationException e) {
-            limite.registrarFallo(username);
+            limite.registrarFallo(clave);
             throw new ErrorNegocio(HttpStatus.UNAUTHORIZED, CREDENCIALES_INVALIDAS);
         }
-        limite.registrarExito(username);
+        limite.registrarExito(clave);
         Usuario u = usuarios.findByUsername(username).orElseThrow();
-        TokenService.TokenEmitido t = tokens.emitir(u);
-        return new LoginResponse(t.token(), t.expiraEn(), UsuarioResponse.de(u));
+        return new Sesion(tokens.emitir(u), u);
     }
 }

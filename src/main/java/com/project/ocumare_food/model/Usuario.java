@@ -40,6 +40,18 @@ public class Usuario {
     @Column(nullable = false)
     private boolean activo = true;
 
+    /**
+     * Sube cada vez que hay que sacar a la persona de todas partes (se desactiva, cambia de rol o de
+     * contraseña). Los tokens llevan este número; si ya no coincide, el token deja de servir.
+     */
+    @Builder.Default
+    @Column(name = "version_sesion", nullable = false)
+    private int versionSesion = 0;
+
+    public void cerrarSesiones() {
+        versionSesion++;
+    }
+
     @CreationTimestamp
     @Column(name = "creado_en", nullable = false, updatable = false)
     private LocalDateTime creadoEn;

@@ -31,12 +31,13 @@ public class TokenService {
         Instant ahora = Instant.now();
         Instant expira = ahora.plus(horas, ChronoUnit.HOURS);
         JwtClaimsSet claims = JwtClaimsSet.builder()
-                .issuer("ocumare-food")
+                .issuer(SecurityConfig.EMISOR)
                 .issuedAt(ahora)
                 .expiresAt(expira)
                 .subject(usuario.getUsername())
                 .claim(SecurityConfig.CLAIM_USUARIO_ID, usuario.getId())
                 .claim(SecurityConfig.CLAIM_ROLES, List.of(usuario.getRol().name()))
+                .claim(SecurityConfig.CLAIM_VERSION, usuario.getVersionSesion())
                 .build();
         JwsHeader header = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

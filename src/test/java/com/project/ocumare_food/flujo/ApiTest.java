@@ -22,10 +22,10 @@ abstract class ApiTest {
     String tokenAdmin;
 
     String login(String username, String password) throws Exception {
-        String json = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+        var cookie = mvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}"))
-                .andExpect(status().isOk()).andReturn().getResponse().getContentAsString();
-        return "Bearer " + JsonPath.read(json, "$.token");
+                .andExpect(status().isOk()).andReturn().getResponse().getCookie("ocumare_sesion");
+        return "Bearer " + cookie.getValue();
     }
 
     String crearYEntrar(String username, Rol rol) throws Exception {
