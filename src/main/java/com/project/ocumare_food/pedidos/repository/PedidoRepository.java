@@ -1,5 +1,7 @@
 package com.project.ocumare_food.pedidos.repository;
 
+import com.project.ocumare_food.pedidos.ResumenVentas.PorEstado;
+import com.project.ocumare_food.pedidos.ResumenVentas.VentaPorMesero;
 import com.project.ocumare_food.pedidos.model.Pedido;
 import com.project.ocumare_food.pedidos.model.EstadoPedido;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -31,19 +33,13 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
     @Query("select p.mesa.id, p.id from Pedido p where p.mesa is not null and p.estado in :estados")
     List<Object[]> mesasOcupadas(Collection<EstadoPedido> estados);
 
-    record PorEstado(EstadoPedido estado, Long cantidad, java.math.BigDecimal totalUsd) {
-    }
-
-    record VentaPorMesero(Long meseroId, String mesero, Long pedidos, java.math.BigDecimal ventaUsd) {
-    }
-
     @Query("""
-            select new com.project.ocumare_food.pedidos.repository.PedidoRepository$PorEstado(p.estado, count(p), sum(p.totalUsd))
+            select new com.project.ocumare_food.pedidos.ResumenVentas$PorEstado(p.estado, count(p), sum(p.totalUsd))
             from Pedido p where p.turno.id in :turnos group by p.estado""")
     List<PorEstado> resumenPorEstado(Collection<Long> turnos);
 
     @Query("""
-            select new com.project.ocumare_food.pedidos.repository.PedidoRepository$VentaPorMesero(m.id, m.nombre, count(p), sum(p.totalUsd))
+            select new com.project.ocumare_food.pedidos.ResumenVentas$VentaPorMesero(m.id, m.nombre, count(p), sum(p.totalUsd))
             from Pedido p left join p.mesero m
             where p.turno.id in :turnos and p.estado <> com.project.ocumare_food.pedidos.model.EstadoPedido.ANULADO
             group by m.id, m.nombre""")

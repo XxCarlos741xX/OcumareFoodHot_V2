@@ -1,48 +1,42 @@
-package com.project.ocumare_food.turnos;
+package com.project.ocumare_food.moneda;
 
-import com.project.ocumare_food.pedidos.service.PedidoService;
-
-import com.project.ocumare_food.turnos.dto.OperacionDto.*;
 import com.project.ocumare_food.compartido.ErrorNegocio;
+import com.project.ocumare_food.moneda.dto.TasaDto.TasaRequest;
+import com.project.ocumare_food.moneda.dto.TasaDto.TasaResponse;
 import com.project.ocumare_food.moneda.model.TasaCambio;
-import com.project.ocumare_food.turnos.model.Turno;
-import com.project.ocumare_food.turnos.model.EstadoTurno;
 import com.project.ocumare_food.moneda.repository.TasaCambioRepository;
-import com.project.ocumare_food.turnos.repository.TurnoRepository;
-import com.project.ocumare_food.usuarios.repository.UsuarioRepository;
 import com.project.ocumare_food.usuarios.UsuarioActual;
+import com.project.ocumare_food.usuarios.Usuarios;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 /**
- * Tasa de cambio y apertura de turnos.
+ * Tasa de cambio (API pública del módulo moneda: los demás módulos solo usan {@link #tasaVigente()}).
  * La tasa NO es obligatoria para operar: si no se registró la del día se usa la última conocida,
  * y si nunca hubo una, los pedidos van solo en USD (ver PedidoService).
  */
 @Service
-public class OperacionService {
+public class TasaService {
+
+    /** Nombre con que se guardan las tasas que trae el sistema solo. */
+    public static final String FUENTE_BCV_AUTO = "BCV automática";
 
     private final TasaCambioRepository tasas;
-    private final TurnoRepository turnos;
-    private final UsuarioRepository usuarios;
+    private final Usuarios usuarios;
     private final Clock reloj;
 
-    public OperacionService(TasaCambioRepository tasas, TurnoRepository turnos, UsuarioRepository usuarios, Clock reloj) {
+    public TasaService(TasaCambioRepository tasas, Usuarios usuarios, Clock reloj) {
         this.tasas = tasas;
-        this.turnos = turnos;
         this.usuarios = usuarios;
         this.reloj = reloj;
     }
-
-    // ===================== Tasa =====================
 
     @Transactional
     public TasaResponse registrarTasa(TasaRequest req, UsuarioActual actor) {
@@ -50,13 +44,10 @@ public class OperacionService {
                 .bsPorUsd(req.bsPorUsd().setScale(4, RoundingMode.HALF_UP))
                 .vigenteDesde(LocalDateTime.now(reloj))
                 .fuente(req.fuente() == null || req.fuente().isBlank() ? "Manual" : req.fuente().trim())
-                .registradaPor(usuarios.getReferenceById(actor.id()))
+                .registradaPor(usuarios.referencia(actor.id()))
                 .build();
         return TasaResponse.de(tasas.save(t));
     }
-
-    /** Nombre con que se guardan las tasas que trae el sistema solo. */
-    public static final String FUENTE_BCV_AUTO = "BCV automática";
 
     /**
      * Registra la tasa del BCV traída por el sistema, solo si el BCV publicó un valor distinto
@@ -104,35 +95,5 @@ public class OperacionService {
 
     private Optional<TasaCambio> ultimaTasa() {
         return tasas.findFirstByOrderByIdDesc();
-    }
-
-    // ===================== Turnos =====================
-
-    /** Solo puede haber un turno abierto a la vez, y un turno por tipo por día. */
-    @Transactional
-    public TurnoResponse abrirTurno(AbrirTurnoRequest req, UsuarioActual actor) {
-        if (turnos.existsByEstado(EstadoTurno.ABIERTO)) {
-            throw ErrorNegocio.conflicto("Ya hay un turno abierto; ciérralo antes de abrir otro");
-        }
-        LocalDate fecha = req.fechaOperativa() == null ? LocalDate.now(reloj) : req.fechaOperativa();
-        if (turnos.existsByFechaOperativaAndTipo(fecha, req.tipo())) {
-            throw ErrorNegocio.conflicto("El turno " + req.tipo() + " del " + fecha + " ya existe");
-        }
-        Turno t = Turno.builder()
-                .tipo(req.tipo())
-                .fechaOperativa(fecha)
-                .abiertoEn(LocalDateTime.now(reloj))
-                .abiertoPor(usuarios.getReferenceById(actor.id()))
-                .fondoInicialUsd(com.project.ocumare_food.compartido.Dinero.monto(req.fondoInicialUsd()))
-                .fondoInicialBs(com.project.ocumare_food.compartido.Dinero.monto(req.fondoInicialBs()))
-                .build();
-        turnos.saveAndFlush(t);
-        return TurnoResponse.de(turnos.findById(t.getId()).orElseThrow());
-    }
-
-    @Transactional(readOnly = true)
-    public TurnoResponse turnoActual() {
-        return turnos.findFirstByEstado(EstadoTurno.ABIERTO).map(TurnoResponse::de)
-                .orElseThrow(() -> ErrorNegocio.noEncontrado("No hay ningún turno abierto"));
     }
 }

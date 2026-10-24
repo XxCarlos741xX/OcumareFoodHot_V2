@@ -1,40 +1,31 @@
 package com.project.ocumare_food.pedidos.service;
 
-import com.project.ocumare_food.notificaciones.NotificadorPedidos;
-import com.project.ocumare_food.turnos.OperacionService;
 
 import com.project.ocumare_food.pedidos.dto.PedidoDto.*;
 
 import static com.project.ocumare_food.pedidos.dto.PedidoDto.MAX_LINEAS;
 import com.project.ocumare_food.compartido.ErrorNegocio;
-import com.project.ocumare_food.catalogo.model.Categoria;
-import com.project.ocumare_food.catalogo.model.Imagen;
 import com.project.ocumare_food.catalogo.model.Producto;
-import com.project.ocumare_food.moneda.model.TasaCambio;
 import com.project.ocumare_food.pedidos.model.DetallePedido;
 import com.project.ocumare_food.pedidos.model.Pago;
 import com.project.ocumare_food.pedidos.model.Pedido;
 import com.project.ocumare_food.salon.model.Mesa;
 import com.project.ocumare_food.turnos.model.Turno;
-import com.project.ocumare_food.usuarios.model.Usuario;
 import com.project.ocumare_food.moneda.model.Moneda;
 import com.project.ocumare_food.pedidos.model.EstadoPedido;
 import com.project.ocumare_food.pedidos.model.MetodoPago;
 import com.project.ocumare_food.pedidos.model.TipoPedido;
-import com.project.ocumare_food.turnos.model.EstadoTurno;
-import com.project.ocumare_food.turnos.model.TipoTurno;
 import com.project.ocumare_food.usuarios.model.Rol;
-import com.project.ocumare_food.catalogo.repository.CategoriaRepository;
-import com.project.ocumare_food.catalogo.repository.ImagenRepository;
-import com.project.ocumare_food.catalogo.repository.ProductoRepository;
-import com.project.ocumare_food.moneda.repository.TasaCambioRepository;
-import com.project.ocumare_food.pedidos.repository.PagoRepository;
 import com.project.ocumare_food.pedidos.repository.PedidoRepository;
-import com.project.ocumare_food.salon.repository.MesaRepository;
-import com.project.ocumare_food.turnos.repository.TurnoRepository;
-import com.project.ocumare_food.usuarios.repository.UsuarioRepository;
+import com.project.ocumare_food.catalogo.CatalogoService;
+import com.project.ocumare_food.moneda.TasaService;
+import com.project.ocumare_food.pedidos.PedidoWebRecibido;
+import com.project.ocumare_food.salon.MesaService;
+import com.project.ocumare_food.turnos.TurnoService;
 import com.project.ocumare_food.usuarios.UsuarioActual;
+import com.project.ocumare_food.usuarios.Usuarios;
 import com.project.ocumare_food.compartido.Dinero;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -52,7 +43,7 @@ import java.util.*;
  *
  * - El pedido se asocia al mesero del token y al turno abierto.
  * - Los precios SIEMPRE se toman de la base de datos, nunca del cliente.
- * - La tasa no es obligatoria (ver OperacionService).
+ * - La tasa no es obligatoria (ver TasaService).
  * - Un pedido pasa a PAGADO solo cuando está ENTREGADO y su saldo es 0, sin importar el orden.
  */
 @Service
@@ -70,27 +61,23 @@ public class PedidoService {
             EstadoPedido.LISTO, EstadoPedido.ENTREGADO);
 
     private final PedidoRepository pedidos;
-    private final ProductoRepository productos;
-    private final MesaRepository mesas;
-    private final TurnoRepository turnos;
-    private final UsuarioRepository usuarios;
-    private final OperacionService operacion;
+    private final CatalogoService catalogo;
+    private final MesaService mesas;
+    private final TurnoService turnos;
+    private final Usuarios usuarios;
+    private final TasaService tasas;
     private final Clock reloj;
-    private final org.springframework.context.ApplicationEventPublisher eventos;
+    private final ApplicationEventPublisher eventos;
 
-    /** Se publica al guardar un pedido web; NotificadorPedidos avisa al equipo después del commit. */
-    public record PedidoWebRecibido(Long pedidoId) {
-    }
-
-    public PedidoService(PedidoRepository pedidos, ProductoRepository productos, MesaRepository mesas,
-                         TurnoRepository turnos, UsuarioRepository usuarios, OperacionService operacion, Clock reloj,
-                         org.springframework.context.ApplicationEventPublisher eventos) {
+    public PedidoService(PedidoRepository pedidos, CatalogoService catalogo, MesaService mesas,
+                         TurnoService turnos, Usuarios usuarios, TasaService tasas, Clock reloj,
+                         ApplicationEventPublisher eventos) {
         this.pedidos = pedidos;
-        this.productos = productos;
+        this.catalogo = catalogo;
         this.mesas = mesas;
         this.turnos = turnos;
         this.usuarios = usuarios;
-        this.operacion = operacion;
+        this.tasas = tasas;
         this.reloj = reloj;
         this.eventos = eventos;
     }
@@ -109,7 +96,7 @@ public class PedidoService {
         Mesa mesa = null;
         if (req.tipo() == TipoPedido.MESA) {
             if (req.mesaId() == null) throw ErrorNegocio.invalido("Indica la mesa");
-            mesa = mesas.findById(req.mesaId()).orElseThrow(() -> ErrorNegocio.noEncontrado("Mesa no encontrada"));
+            mesa = mesas.buscar(req.mesaId()).orElseThrow(() -> ErrorNegocio.noEncontrado("Mesa no encontrada"));
             if (!mesa.isActiva()) throw ErrorNegocio.invalido("La mesa está desactivada");
         } else if (req.mesaId() != null) {
             throw ErrorNegocio.invalido("Solo los pedidos tipo MESA llevan mesa");
@@ -126,7 +113,7 @@ public class PedidoService {
 
         Pedido p = nuevoPedido(turno, req.tipo());
         p.setMesa(mesa);
-        p.setMesero(usuarios.getReferenceById(actor.id()));
+        p.setMesero(usuarios.referencia(actor.id()));
         p.setClienteNombre(limpio(req.clienteNombre()));
         p.setClienteTelefono(limpio(req.clienteTelefono()));
         p.setDireccionEntrega(req.tipo() == TipoPedido.DELIVERY ? limpio(req.direccionEntrega()) : null);
@@ -188,7 +175,7 @@ public class PedidoService {
                 .fechaOperativa(turno.getFechaOperativa())
                 .numeroDiario(pedidos.maxNumeroDiario(turno.getFechaOperativa()) + 1)
                 .tipo(tipo)
-                .tasaBsPorUsd(operacion.tasaVigente().orElse(null))
+                .tasaBsPorUsd(tasas.tasaVigente().orElse(null))
                 .build();
     }
 
@@ -197,7 +184,7 @@ public class PedidoService {
             throw ErrorNegocio.invalido("El pedido no puede tener más de " + MAX_LINEAS + " líneas");
         }
         Map<Long, Producto> porId = new HashMap<>();
-        productos.findAllById(items.stream().map(ItemRequest::productoId).toList())
+        catalogo.productosPorId(items.stream().map(ItemRequest::productoId).toList())
                 .forEach(pr -> porId.put(pr.getId(), pr));
         for (ItemRequest it : items) {
             Producto pr = porId.get(it.productoId());
@@ -216,7 +203,7 @@ public class PedidoService {
     /** Pedidos del turno abierto (o de un turno dado). soloAbiertos = los que siguen en curso. */
     @Transactional(readOnly = true)
     public List<PedidoResumen> listar(Long turnoId, boolean soloAbiertos) {
-        Long id = turnoId != null ? turnoId : turnos.findFirstByEstado(EstadoTurno.ABIERTO)
+        Long id = turnoId != null ? turnoId : turnos.turnoAbierto()
                 .map(Turno::getId)
                 .orElseThrow(() -> ErrorNegocio.noEncontrado("No hay ningún turno abierto"));
         List<Pedido> lista = soloAbiertos
@@ -305,7 +292,7 @@ public class PedidoService {
     @Transactional
     public PedidoResponse registrarPago(Long id, PagoRequest req, UsuarioActual actor) {
         Pedido p = pedidoEditable(id);
-        Turno turno = turnos.findFirstByEstado(EstadoTurno.ABIERTO)
+        Turno turno = turnos.turnoAbierto()
                 .orElseThrow(() -> ErrorNegocio.conflicto("No hay un turno abierto para registrar el cobro"));
 
         if (req.metodo() != MetodoPago.EFECTIVO_USD && req.metodo() != MetodoPago.EFECTIVO_BS
@@ -315,7 +302,7 @@ public class PedidoService {
 
         BigDecimal tasa = p.getTasaBsPorUsd();
         if (tasa == null) {
-            tasa = operacion.tasaVigente().orElse(null);
+            tasa = tasas.tasaVigente().orElse(null);
             if (tasa == null && req.metodo().getMoneda() == Moneda.BS) {
                 throw ErrorNegocio.invalido("Para cobrar en bolívares primero registra una tasa de cambio");
             }
@@ -329,7 +316,7 @@ public class PedidoService {
                     + saldo + "). Registra solo lo que se cobra; el vuelto no se registra.");
         }
         pago.setTurno(turno);
-        pago.setRegistradoPor(usuarios.getReferenceById(actor.id()));
+        pago.setRegistradoPor(usuarios.referencia(actor.id()));
         p.agregarPago(pago);
         cerrarSiCorresponde(p);
         pedidos.flush();

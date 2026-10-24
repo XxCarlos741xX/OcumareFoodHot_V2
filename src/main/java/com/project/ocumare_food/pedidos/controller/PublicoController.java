@@ -1,9 +1,7 @@
 package com.project.ocumare_food.pedidos.controller;
 
-import com.project.ocumare_food.catalogo.dto.CatalogoDto.MenuResponse;
 import com.project.ocumare_food.pedidos.dto.PedidoDto.PedidoWebRequest;
 import com.project.ocumare_food.pedidos.dto.PedidoDto.PedidoWebResponse;
-import com.project.ocumare_food.catalogo.CatalogoService;
 import com.project.ocumare_food.pedidos.service.PedidoService;
 import jakarta.validation.Valid;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -11,22 +9,15 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/** Endpoints públicos (sin login) que usa la página web de clientes. */
+/** Pedidos públicos (sin login) de la página web de clientes. El menú público está en catalogo (MenuPublicoController). */
 @RestController
 @RequestMapping("/api")
 public class PublicoController {
 
-    private final CatalogoService catalogo;
     private final PedidoService pedidos;
 
-    public PublicoController(CatalogoService catalogo, PedidoService pedidos) {
-        this.catalogo = catalogo;
+    public PublicoController(PedidoService pedidos) {
         this.pedidos = pedidos;
-    }
-
-    @GetMapping("/menu")
-    public MenuResponse menu() {
-        return catalogo.menuPublico();
     }
 
     @PostMapping("/web/pedidos")

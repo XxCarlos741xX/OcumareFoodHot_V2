@@ -1,18 +1,18 @@
 package com.project.ocumare_food.caja.service;
 
 import com.project.ocumare_food.caja.dto.CorteDto.*;
-import com.project.ocumare_food.turnos.dto.OperacionDto.TurnoResponse;
+import com.project.ocumare_food.turnos.dto.TurnoDto.TurnoResponse;
 import com.project.ocumare_food.compartido.ErrorNegocio;
 import com.project.ocumare_food.turnos.model.Turno;
 import com.project.ocumare_food.pedidos.model.EstadoPedido;
 import com.project.ocumare_food.turnos.model.EstadoTurno;
 import com.project.ocumare_food.pedidos.model.MetodoPago;
 import com.project.ocumare_food.moneda.model.Moneda;
-import com.project.ocumare_food.pedidos.repository.PagoRepository;
-import com.project.ocumare_food.pedidos.repository.PedidoRepository;
-import com.project.ocumare_food.turnos.repository.TurnoRepository;
-import com.project.ocumare_food.usuarios.repository.UsuarioRepository;
+import com.project.ocumare_food.pedidos.ConsultasPedidos;
+import com.project.ocumare_food.pedidos.ResumenVentas;
+import com.project.ocumare_food.turnos.TurnoService;
 import com.project.ocumare_food.usuarios.UsuarioActual;
+import com.project.ocumare_food.usuarios.Usuarios;
 import com.project.ocumare_food.compartido.Dinero;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,17 +38,14 @@ import java.util.*;
 @Service
 public class CorteService {
 
-    private final TurnoRepository turnos;
-    private final PedidoRepository pedidos;
-    private final PagoRepository pagos;
-    private final UsuarioRepository usuarios;
+    private final TurnoService turnos;
+    private final ConsultasPedidos ventas;
+    private final Usuarios usuarios;
     private final Clock reloj;
 
-    public CorteService(TurnoRepository turnos, PedidoRepository pedidos, PagoRepository pagos,
-                        UsuarioRepository usuarios, Clock reloj) {
+    public CorteService(TurnoService turnos, ConsultasPedidos ventas, Usuarios usuarios, Clock reloj) {
         this.turnos = turnos;
-        this.pedidos = pedidos;
-        this.pagos = pagos;
+        this.ventas = ventas;
         this.usuarios = usuarios;
         this.reloj = reloj;
     }
@@ -73,7 +70,7 @@ public class CorteService {
 
         t.setEstado(EstadoTurno.CERRADO);
         t.setCerradoEn(LocalDateTime.now(reloj));
-        t.setCerradoPor(usuarios.getReferenceById(actor.id()));
+        t.setCerradoPor(usuarios.referencia(actor.id()));
         t.setCantidadPedidos((int) tot.pedidos());
         t.setTotalVentaUsd(tot.ventaUsd());
         t.setRecaudadoUsd(tot.recaudadoUsd());
@@ -86,7 +83,7 @@ public class CorteService {
         if (req != null && req.conteo() != null) {
             aplicarConteo(t, req.conteo(), actor);
         }
-        turnos.flush();
+        turnos.guardarCambios();
         return corte(t);
     }
 
@@ -98,14 +95,14 @@ public class CorteService {
             throw ErrorNegocio.conflicto("El conteo se registra al cerrar el turno o después de cerrarlo");
         }
         aplicarConteo(t, req, actor);
-        turnos.flush();
+        turnos.guardarCambios();
         return corte(t);
     }
 
     private void aplicarConteo(Turno t, ConteoRequest c, UsuarioActual actor) {
         t.setEfectivoUsdContado(Dinero.monto(c.efectivoUsd()));
         t.setEfectivoBsContado(Dinero.monto(c.efectivoBs()));
-        t.setConteoPor(usuarios.getReferenceById(actor.id()));
+        t.setConteoPor(usuarios.referencia(actor.id()));
         t.setConteoEn(LocalDateTime.now(reloj));
     }
 
@@ -122,14 +119,14 @@ public class CorteService {
         LocalDate h = hasta == null ? LocalDate.now(reloj) : hasta;
         LocalDate d = desde == null ? h.minusDays(30) : desde;
         validarRango(d, h);
-        return turnos.findByFechaOperativaBetweenOrderByFechaOperativaDescAbiertoEnDesc(d, h)
+        return turnos.entre(d, h)
                 .stream().map(TurnoResponse::de).toList();
     }
 
     @Transactional(readOnly = true)
     public DashboardDia dashboardDia(LocalDate fecha) {
         LocalDate f = fecha == null ? LocalDate.now(reloj) : fecha;
-        List<Turno> delDia = turnos.findByFechaOperativaOrderByAbiertoEnAsc(f);
+        List<Turno> delDia = turnos.delDia(f);
         List<Long> ids = delDia.stream().map(Turno::getId).toList();
         if (ids.isEmpty()) {
             Totales vacio = new Totales(0, 0, 0, cero(), cero(), cero(), cero(), cero());
@@ -151,7 +148,7 @@ public class CorteService {
         for (LocalDate x = d; !x.isAfter(h); x = x.plusDays(1)) {
             porDia.put(x, new BigDecimal[]{cero(), cero(), cero()});
         }
-        for (PagoRepository.PorDiaMoneda fila : pagos.recaudoPorDia(d, h)) {
+        for (ResumenVentas.PorDiaMoneda fila : ventas.recaudoPorDia(d, h)) {
             BigDecimal[] v = porDia.get(fila.fecha());
             if (fila.moneda() == Moneda.USD) v[0] = v[0].add(n(fila.monto()));
             else v[1] = v[1].add(n(fila.monto()));
@@ -174,7 +171,7 @@ public class CorteService {
     // ===================== Armado del corte =====================
 
     private Turno turno(Long id) {
-        return turnos.findById(id).orElseThrow(() -> ErrorNegocio.noEncontrado("Turno no encontrado"));
+        return turnos.buscar(id).orElseThrow(() -> ErrorNegocio.noEncontrado("Turno no encontrado"));
     }
 
     private CorteTurno corte(Turno t) {
@@ -187,7 +184,7 @@ public class CorteService {
     private Totales totales(List<Long> ids) {
         long validos = 0, anulados = 0, pendientes = 0;
         BigDecimal venta = cero();
-        for (PedidoRepository.PorEstado e : pedidos.resumenPorEstado(ids)) {
+        for (ResumenVentas.PorEstado e : ventas.resumenPorEstado(ids)) {
             if (e.estado() == EstadoPedido.ANULADO) {
                 anulados += e.cantidad();
                 continue;
@@ -197,7 +194,7 @@ public class CorteService {
             if (e.estado() != EstadoPedido.PAGADO) pendientes += e.cantidad();
         }
         BigDecimal usd = cero(), bs = cero(), equiv = cero();
-        for (PagoRepository.PorMetodo m : pagos.recaudoPorMetodo(ids)) {
+        for (ResumenVentas.PorMetodo m : ventas.recaudoPorMetodo(ids)) {
             if (m.moneda() == Moneda.USD) usd = usd.add(n(m.monto()));
             else bs = bs.add(n(m.monto()));
             equiv = equiv.add(n(m.equivalenteUsd()));
@@ -213,7 +210,7 @@ public class CorteService {
         for (MetodoPago m : MetodoPago.values()) {
             mapa.put(m, new LineaMetodo(m, m.getMoneda(), 0, cero(), cero()));
         }
-        for (PagoRepository.PorMetodo f : pagos.recaudoPorMetodo(ids)) {
+        for (ResumenVentas.PorMetodo f : ventas.recaudoPorMetodo(ids)) {
             mapa.put(f.metodo(), new LineaMetodo(f.metodo(), f.moneda(), f.cantidad(), n(f.monto()), n(f.equivalenteUsd())));
         }
         return mapa;
@@ -229,14 +226,14 @@ public class CorteService {
         }
         Map<Long, Acum> mapa = new LinkedHashMap<>();
         final Long WEB = -1L;
-        for (PedidoRepository.VentaPorMesero f : pedidos.ventaPorMesero(ids)) {
+        for (ResumenVentas.VentaPorMesero f : ventas.ventaPorMesero(ids)) {
             Long key = f.meseroId() == null ? WEB : f.meseroId();
             Acum a = mapa.computeIfAbsent(key, k -> new Acum(f.meseroId(), f.meseroId() == null ? "Web" : f.mesero(),
                     new long[]{0}, new BigDecimal[]{cero(), cero(), cero(), cero()}));
             a.pedidos()[0] += f.pedidos();
             a.v()[0] = a.v()[0].add(n(f.ventaUsd()));
         }
-        for (PagoRepository.PorMeseroMoneda f : pagos.recaudoPorMesero(ids)) {
+        for (ResumenVentas.PorMeseroMoneda f : ventas.recaudoPorMesero(ids)) {
             Long key = f.meseroId() == null ? WEB : f.meseroId();
             Acum a = mapa.computeIfAbsent(key, k -> new Acum(f.meseroId(), f.meseroId() == null ? "Web" : f.mesero(),
                     new long[]{0}, new BigDecimal[]{cero(), cero(), cero(), cero()}));

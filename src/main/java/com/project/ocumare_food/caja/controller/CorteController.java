@@ -1,7 +1,7 @@
 package com.project.ocumare_food.caja.controller;
 
 import com.project.ocumare_food.caja.dto.CorteDto.*;
-import com.project.ocumare_food.turnos.dto.OperacionDto.TurnoResponse;
+import com.project.ocumare_food.turnos.dto.TurnoDto.TurnoResponse;
 import com.project.ocumare_food.usuarios.UsuarioActual;
 import com.project.ocumare_food.caja.service.CorteService;
 import jakarta.validation.Valid;

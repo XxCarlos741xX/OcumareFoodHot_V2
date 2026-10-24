@@ -1,10 +1,10 @@
 package com.project.ocumare_food.notificaciones;
 
-import com.project.ocumare_food.pedidos.service.PedidoService;
 
 import com.project.ocumare_food.pedidos.model.DetallePedido;
 import com.project.ocumare_food.pedidos.model.Pedido;
-import com.project.ocumare_food.pedidos.repository.PedidoRepository;
+import com.project.ocumare_food.pedidos.ConsultasPedidos;
+import com.project.ocumare_food.pedidos.PedidoWebRecibido;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,12 +33,12 @@ public class NotificadorPedidos {
 
     private static final Logger log = LoggerFactory.getLogger(NotificadorPedidos.class);
 
-    private final PedidoRepository pedidos;
+    private final ConsultasPedidos pedidos;
     private final String token;
     private final String chatId;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
-    public NotificadorPedidos(PedidoRepository pedidos,
+    public NotificadorPedidos(ConsultasPedidos pedidos,
                               @Value("${ocumare.telegram.token:}") String token,
                               @Value("${ocumare.telegram.chat-id:}") String chatId) {
         this.pedidos = pedidos;
@@ -52,9 +52,9 @@ public class NotificadorPedidos {
 
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
-    public void alRecibirPedidoWeb(PedidoService.PedidoWebRecibido evento) {
+    public void alRecibirPedidoWeb(PedidoWebRecibido evento) {
         if (!activo()) return;
-        pedidos.findById(evento.pedidoId()).ifPresent(p -> {
+        pedidos.buscar(evento.pedidoId()).ifPresent(p -> {
             String texto = mensaje(p);
             Thread.ofVirtual().start(() -> enviar(texto));
         });

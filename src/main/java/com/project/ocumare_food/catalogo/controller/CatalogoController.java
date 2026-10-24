@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * Menú y mesas. Lectura: cualquier usuario con sesión. Escritura: GERENTE y ADMIN (ver SecurityConfig).
+ * Categorías y productos. Lectura: cualquier usuario con sesión. Escritura: GERENTE y ADMIN (ver SecurityConfig).
  * DELETE desactiva (baja lógica), no borra.
  */
 @RestController
@@ -84,41 +84,5 @@ public class CatalogoController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void desactivarProducto(@PathVariable Long id) {
         catalogo.desactivarProducto(id);
-    }
-
-    // ---------- Mesas ----------
-
-    @GetMapping("/mesas")
-    public List<MesaResponse> mesas(@RequestParam(defaultValue = "false") boolean incluirInactivas) {
-        return catalogo.listarMesas(incluirInactivas);
-    }
-
-    @PostMapping("/mesas")
-    @ResponseStatus(HttpStatus.CREATED)
-    public MesaResponse crearMesa(@Valid @RequestBody MesaRequest req) {
-        return catalogo.crearMesa(req);
-    }
-
-    @PutMapping("/mesas/{id}")
-    public MesaResponse editarMesa(@PathVariable Long id, @Valid @RequestBody MesaRequest req) {
-        return catalogo.editarMesa(id, req);
-    }
-
-    /** Guardar el orden: { "ids": [5, 2, 7, ...] } */
-    @PutMapping("/mesas/orden")
-    public List<MesaResponse> ordenarMesas(@Valid @RequestBody OrdenMesasRequest req) {
-        return catalogo.ordenarMesas(req.ids());
-    }
-
-    /** Renumerar 1..n las mesas activas según su orden. */
-    @PostMapping("/mesas/renumerar")
-    public List<MesaResponse> renumerar() {
-        return catalogo.renumerarMesas();
-    }
-
-    @DeleteMapping("/mesas/{id}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void desactivarMesa(@PathVariable Long id) {
-        catalogo.desactivarMesa(id);
     }
 }

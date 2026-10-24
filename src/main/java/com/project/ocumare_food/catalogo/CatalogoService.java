@@ -1,15 +1,12 @@
 package com.project.ocumare_food.catalogo;
 
-import com.project.ocumare_food.turnos.OperacionService;
 
 import com.project.ocumare_food.catalogo.dto.CatalogoDto.*;
+import com.project.ocumare_food.moneda.TasaService;
 import com.project.ocumare_food.compartido.ErrorNegocio;
 import com.project.ocumare_food.catalogo.model.Categoria;
-import com.project.ocumare_food.salon.model.Mesa;
 import com.project.ocumare_food.catalogo.model.Producto;
 import com.project.ocumare_food.catalogo.repository.CategoriaRepository;
-import com.project.ocumare_food.salon.repository.MesaRepository;
-import com.project.ocumare_food.pedidos.repository.PedidoRepository;
 import com.project.ocumare_food.catalogo.repository.ProductoRepository;
 import com.project.ocumare_food.compartido.Dinero;
 import org.springframework.stereotype.Service;
@@ -19,7 +16,8 @@ import java.math.BigDecimal;
 import java.util.*;
 
 /**
- * Menú (categorías y productos) y mesas.
+ * Menú: categorías y productos (API pública del módulo catalogo).
+ * Pedidos usa {@link #productosPorId(Collection)}; la web usa {@link #menuPublico()}.
  * "Eliminar" es siempre una baja lógica: lo vendido antes sigue apareciendo en los reportes.
  * Los cambios de precio solo afectan pedidos nuevos (cada línea de pedido guarda su precio).
  */
@@ -28,17 +26,12 @@ public class CatalogoService {
 
     private final CategoriaRepository categorias;
     private final ProductoRepository productos;
-    private final MesaRepository mesas;
-    private final PedidoRepository pedidos;
-    private final OperacionService operacion;
+    private final TasaService tasas;
 
-    public CatalogoService(CategoriaRepository categorias, ProductoRepository productos, MesaRepository mesas,
-                           PedidoRepository pedidos, OperacionService operacion) {
+    public CatalogoService(CategoriaRepository categorias, ProductoRepository productos, TasaService tasas) {
         this.categorias = categorias;
         this.productos = productos;
-        this.mesas = mesas;
-        this.pedidos = pedidos;
-        this.operacion = operacion;
+        this.tasas = tasas;
     }
 
     private static String limpio(String s) {
@@ -162,11 +155,17 @@ public class CatalogoService {
         return c;
     }
 
+    /** Para otros módulos (pedidos): los productos con esos ids (los que no existan no vienen). */
+    @Transactional(readOnly = true)
+    public List<Producto> productosPorId(Collection<Long> ids) {
+        return productos.findAllById(ids);
+    }
+
     // ===================== Menú público =====================
 
     @Transactional(readOnly = true)
     public MenuResponse menuPublico() {
-        BigDecimal tasa = operacion.tasaVigente().orElse(null);
+        BigDecimal tasa = tasas.tasaVigente().orElse(null);
         Map<Long, MenuCategoria> porCategoria = new LinkedHashMap<>();
         for (Producto p : productos.findByActivoTrueAndCategoriaActivaTrueOrderByCategoriaOrdenAscNombreAsc()) {
             Categoria c = p.getCategoria();
@@ -177,120 +176,5 @@ public class CatalogoService {
                             p.getImagenUrl(), p.isDisponible(), p.isDestacado()));
         }
         return new MenuResponse(tasa, List.copyOf(porCategoria.values()));
-    }
-
-    // ===================== Mesas =====================
-
-    private Map<Long, Long> mesasOcupadas() {
-        Map<Long, Long> ocupadas = new HashMap<>();
-        for (Object[] fila : pedidos.mesasOcupadas(PedidoRepository.ESTADOS_ABIERTOS)) {
-            ocupadas.put((Long) fila[0], (Long) fila[1]);
-        }
-        return ocupadas;
-    }
-
-    private List<MesaResponse> respuestaMesas(List<Mesa> lista) {
-        Map<Long, Long> ocupadas = mesasOcupadas();
-        return lista.stream().map(m -> MesaResponse.de(m, ocupadas.get(m.getId()))).toList();
-    }
-
-    @Transactional(readOnly = true)
-    public List<MesaResponse> listarMesas(boolean incluirInactivas) {
-        return respuestaMesas(incluirInactivas
-                ? mesas.findAllByOrderByOrdenAscNumeroAsc()
-                : mesas.findByActivaTrueOrderByOrdenAscNumeroAsc());
-    }
-
-    private Mesa mesa(Long id) {
-        return mesas.findById(id).orElseThrow(() -> ErrorNegocio.noEncontrado("Mesa no encontrada"));
-    }
-
-    private boolean ocupada(Long mesaId) {
-        return !pedidos.findByMesaIdAndEstadoIn(mesaId, PedidoRepository.ESTADOS_ABIERTOS).isEmpty();
-    }
-
-    @Transactional
-    public MesaResponse crearMesa(MesaRequest req) {
-        Integer numero = req.numero();
-        if (numero == null) {
-            numero = mesas.findAll().stream().mapToInt(Mesa::getNumero).max().orElse(0) + 1;
-        } else if (mesas.existsByNumero(numero)) {
-            throw ErrorNegocio.conflicto("Ya existe la mesa " + numero);
-        }
-        Mesa m = Mesa.builder()
-                .numero(numero)
-                .nombre(limpio(req.nombre()))
-                .capacidad(req.capacidad() == null ? 4 : req.capacidad())
-                .zona(limpio(req.zona()))
-                .orden(req.orden() == null ? mesas.maxOrden() + 1 : req.orden())
-                .activa(req.activa() == null || req.activa())
-                .build();
-        return MesaResponse.de(mesas.save(m), null);
-    }
-
-    @Transactional
-    public MesaResponse editarMesa(Long id, MesaRequest req) {
-        Mesa m = mesa(id);
-        boolean estaOcupada = ocupada(id);
-        if (req.numero() != null && !req.numero().equals(m.getNumero())) {
-            if (estaOcupada) throw ErrorNegocio.conflicto("La mesa " + m.getNumero() + " está ocupada; cambia el número cuando se libere");
-            if (mesas.existsByNumeroAndIdNot(req.numero(), id)) throw ErrorNegocio.conflicto("Ya existe la mesa " + req.numero());
-            m.setNumero(req.numero());
-        }
-        if (req.activa() != null && !req.activa() && m.isActiva() && estaOcupada) {
-            throw ErrorNegocio.conflicto("La mesa tiene un pedido abierto; ciérralo antes de desactivarla");
-        }
-        m.setNombre(limpio(req.nombre()));
-        m.setZona(limpio(req.zona()));
-        if (req.capacidad() != null) m.setCapacidad(req.capacidad());
-        if (req.orden() != null) m.setOrden(req.orden());
-        if (req.activa() != null) m.setActiva(req.activa());
-        return MesaResponse.de(m, mesasOcupadas().get(id));
-    }
-
-    @Transactional
-    public void desactivarMesa(Long id) {
-        Mesa m = mesa(id);
-        if (ocupada(id)) {
-            throw ErrorNegocio.conflicto("La mesa tiene un pedido abierto; ciérralo antes de desactivarla");
-        }
-        m.setActiva(false);
-    }
-
-    /** Guarda el orden de las mesas (las que no vengan en la lista conservan su orden, después). */
-    @Transactional
-    public List<MesaResponse> ordenarMesas(List<Long> ids) {
-        if (new HashSet<>(ids).size() != ids.size()) throw ErrorNegocio.invalido("Hay mesas repetidas en la lista");
-        Map<Long, Mesa> porId = new HashMap<>();
-        mesas.findAllById(ids).forEach(m -> porId.put(m.getId(), m));
-        if (porId.size() != ids.size()) throw ErrorNegocio.noEncontrado("Alguna de las mesas no existe");
-        for (int i = 0; i < ids.size(); i++) porId.get(ids.get(i)).setOrden(i + 1);
-        int siguiente = ids.size() + 1;
-        for (Mesa m : mesas.findAllByOrderByOrdenAscNumeroAsc()) {
-            if (!porId.containsKey(m.getId())) m.setOrden(siguiente++);
-        }
-        return listarMesas(true);
-    }
-
-    /**
-     * Renumera 1, 2, 3… las mesas activas según su orden. Las inactivas quedan después,
-     * para no chocar. No se permite con mesas ocupadas (el mesero vería cambiar los números).
-     */
-    @Transactional
-    public List<MesaResponse> renumerarMesas() {
-        if (!mesasOcupadas().isEmpty()) {
-            throw ErrorNegocio.conflicto("Hay mesas ocupadas; renumera cuando todas estén libres");
-        }
-        List<Mesa> todas = new ArrayList<>(mesas.findAllByOrderByOrdenAscNumeroAsc());
-        todas.sort(Comparator.comparing((Mesa m) -> !m.isActiva()));   // activas primero, sin perder el orden
-        // Paso 1: números temporales negativos para no violar la regla de número único al intercambiar.
-        todas.forEach(m -> m.setNumero(-m.getId().intValue()));
-        mesas.flush();
-        for (int i = 0; i < todas.size(); i++) {
-            todas.get(i).setNumero(i + 1);
-            todas.get(i).setOrden(i + 1);
-        }
-        mesas.flush();
-        return listarMesas(true);
     }
 }

@@ -1,6 +1,6 @@
 package com.project.ocumare_food.moneda.bcv;
 
-import com.project.ocumare_food.turnos.OperacionService;
+import com.project.ocumare_food.moneda.TasaService;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,18 +21,18 @@ public class TasaAutomatica {
     private static final Logger log = LoggerFactory.getLogger(TasaAutomatica.class);
 
     private final ConsultaBcv bcv;
-    private final OperacionService operacion;
+    private final TasaService tasas;
 
-    public TasaAutomatica(ConsultaBcv bcv, OperacionService operacion) {
+    public TasaAutomatica(ConsultaBcv bcv, TasaService tasas) {
         this.bcv = bcv;
-        this.operacion = operacion;
+        this.tasas = tasas;
     }
 
     @Scheduled(initialDelay = 30_000, fixedDelay = 3_600_000)
     public void revisar() {
         bcv.tasaOficial().ifPresent(valor -> {
             try {
-                operacion.registrarTasaBcv(valor).ifPresent(t ->
+                tasas.registrarTasaBcv(valor).ifPresent(t ->
                         log.info("Tasa BCV registrada automáticamente: {} Bs/$", t.bsPorUsd()));
             } catch (Exception e) {
                 log.warn("Tasa BCV: no se registró ({})", e.getMessage());

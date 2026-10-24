@@ -1,8 +1,8 @@
 package com.project.ocumare_food.caja.dto;
 
-import com.project.ocumare_food.turnos.dto.OperacionDto;
+import com.project.ocumare_food.turnos.dto.TurnoDto;
 
-import com.project.ocumare_food.turnos.dto.OperacionDto.TurnoResponse;
+import com.project.ocumare_food.turnos.dto.TurnoDto.TurnoResponse;
 import com.project.ocumare_food.pedidos.model.MetodoPago;
 import com.project.ocumare_food.moneda.model.Moneda;
 import jakarta.validation.Valid;
