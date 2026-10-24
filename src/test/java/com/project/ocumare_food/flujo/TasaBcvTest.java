@@ -1,8 +1,8 @@
 package com.project.ocumare_food.flujo;
 
-import com.project.ocumare_food.model.enums.Rol;
-import com.project.ocumare_food.service.ConsultaBcv;
-import com.project.ocumare_food.service.OperacionService;
+import com.project.ocumare_food.usuarios.model.Rol;
+import com.project.ocumare_food.moneda.bcv.ConsultaBcv;
+import com.project.ocumare_food.moneda.TasaService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -24,13 +24,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class TasaBcvTest extends ApiTest {
 
     @MockitoBean ConsultaBcv bcv;
-    @Autowired OperacionService operacion;
+    @Autowired TasaService tasas;
 
     @Test
     void registraSoloCuandoElBcvCambiaYRespetaLaManual() {
-        assertThat(operacion.registrarTasaBcv(new BigDecimal("866.5612"))).isPresent();
-        assertThat(operacion.registrarTasaBcv(new BigDecimal("866.5612"))).isEmpty();
-        assertThat(operacion.tasaVigente()).contains(new BigDecimal("866.5612"));
+        assertThat(tasas.registrarTasaBcv(new BigDecimal("866.5612"))).isPresent();
+        assertThat(tasas.registrarTasaBcv(new BigDecimal("866.5612"))).isEmpty();
+        assertThat(tasas.tasaVigente()).contains(new BigDecimal("866.5612"));
     }
 
     @Test

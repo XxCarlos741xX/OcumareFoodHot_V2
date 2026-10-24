@@ -40,3 +40,14 @@ out/
 .env
 application-local.properties
 build-log.txt
+# Archivos del servidor con contraseñas o datos de clientes: nunca a GitHub (el repositorio es público)
+*.env
+ocumare.env*
+!deploy/ocumare.env.ejemplo
+*.key
+*.pem
+*.p12
+*.jks
+*.sql
+*.sql.gz
+respaldos/

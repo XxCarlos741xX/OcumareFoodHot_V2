@@ -3,11 +3,23 @@ import { demoApi } from './demo'
 const BASE = import.meta.env.VITE_API_URL ?? ''
 const DEMO = import.meta.env.VITE_DEMO === 'true' || import.meta.env.MODE === 'demo'
 
+// La sesión real vive en una cookie HttpOnly que el navegador manda solo: este código nunca ve el token.
+// "token" solo se usa en el modo demo (sin servidor).
 let token = null
+let haySesion = false
 let alExpirar = null
 
 export const setToken = (t) => { token = t }
+export const setSesionActiva = (activa) => { haySesion = activa }
 export const onSesionExpirada = (fn) => { alExpirar = fn }
+
+function encabezadosSesion() {
+  return DEMO && token ? { Authorization: `Bearer ${token}` } : {}
+}
+
+function revisarExpirada(status) {
+  if (status === 401 && haySesion && alExpirar) alExpirar()
+}
 export const esDemo = DEMO
 
 export class ErrorApi extends Error {
@@ -26,10 +38,8 @@ export async function api(ruta, { method = 'GET', body } = {}) {
   try {
     res = await fetch(BASE + ruta, {
       method,
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json', ...encabezadosSesion() },
       body: body === undefined ? undefined : JSON.stringify(body),
     })
   } catch {
@@ -38,7 +48,7 @@ export async function api(ruta, { method = 'GET', body } = {}) {
   if (res.status === 204) return null
   const datos = await res.json().catch(() => null)
   if (!res.ok) {
-    if (res.status === 401 && token && alExpirar) alExpirar()
+    revisarExpirada(res.status)
     throw new ErrorApi(datos?.mensaje ?? `Error ${res.status}`, res.status, datos?.campos)
   }
   return datos
@@ -51,7 +61,8 @@ export async function apiArchivo(ruta, formData) {
   try {
     res = await fetch(BASE + ruta, {
       method: 'POST',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      credentials: 'same-origin',
+      headers: encabezadosSesion(),
       body: formData,
     })
   } catch {
@@ -59,7 +70,7 @@ export async function apiArchivo(ruta, formData) {
   }
   const datos = await res.json().catch(() => null)
   if (!res.ok) {
-    if (res.status === 401 && token && alExpirar) alExpirar()
+    revisarExpirada(res.status)
     throw new ErrorApi(datos?.mensaje ?? `Error ${res.status}`, res.status)
   }
   return datos

@@ -1,6 +1,9 @@
-# Caddy pide y renueva solo el certificado HTTPS.
+# Caddy pide y renueva solo el certificado HTTPS, y manda a HTTPS a quien entre por http://.
 # Cambia "ocumarefood.duckdns.org" por tu dominio y copia este archivo a /etc/caddy/Caddyfile
 ocumarefood.duckdns.org {
 	encode gzip
+	# No anunciar qué servidor web se usa.
+	header -Server
+	# Caddy reemplaza la IP que diga el visitante por la real: así funcionan los límites por IP.
 	reverse_proxy 127.0.0.1:8080
 }

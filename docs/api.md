@@ -1,12 +1,16 @@
 # Ocumare Food — API (Pasos 2 y 3)
 
-Todas las rutas empiezan con `/api`. Con sesión: cabecera `Authorization: Bearer <token>`.
+Todas las rutas empiezan con `/api`. La sesión viaja en la cookie `ocumare_sesion` (HttpOnly, Secure,
+SameSite=Strict, Path=/api) que pone `/auth/login`; el navegador la manda sola. Para pruebas o
+herramientas también sirve la cabecera `Authorization: Bearer <token>`.
+Si se pasa un límite por IP la respuesta es `429` con la cabecera `Retry-After` (segundos).
 Errores: `{ "status", "error", "mensaje", "campos" }`.
 
 ## Público (sin login)
 | Método | Ruta | Uso |
 |---|---|---|
-| POST | /auth/login | `{username, password}` → `{token, expiraEn, usuario}` |
+| POST | /auth/login | `{username, password}` → cookie de sesión + `{expiraEn, usuario}` (el token no va en el cuerpo) |
+| POST | /auth/salir | Borra la cookie de sesión de este equipo |
 | GET | /menu | Menú visible + precio en Bs si hay tasa |
 | POST | /web/pedidos | Pedido de la web (idempotente por `claveExterna`) |
 | GET | /web/pedidos/{claveExterna} | Estado del pedido web |
@@ -15,7 +19,7 @@ Errores: `{ "status", "error", "mensaje", "campos" }`.
 | Método | Ruta | Uso |
 |---|---|---|
 | GET | /auth/yo | Mis datos |
-| PUT | /auth/password | `{passwordActual, passwordNueva}` |
+| PUT | /auth/password | `{passwordActual, passwordNueva}` → cookie nueva; cierra la sesión en los demás equipos |
 | GET | /productos, /productos/{id}, /categorias, /mesas | Consultas (mesas trae `pedidoAbiertoId` si está ocupada) |
 | GET | /tasas/vigente, /turnos/actual | Tasa y turno en curso |
 
@@ -100,3 +104,19 @@ Errores: `400` si el archivo no es una foto o falta el campo, `413` si pasa del 
 Además, con `ocumare.tasa-bcv.activa=true` (variable `TASA_BCV_ACTIVA`, activa por defecto) el servidor la consulta cada hora.
 Se guarda con fuente `BCV automática` y solo cuando el BCV publica un valor distinto al último que trajo,
 así una tasa puesta a mano no se pisa hasta la siguiente publicación del BCV.
+
+## Sesiones que se cierran solas
+
+Desactivar a una persona, cambiarle el rol o restablecerle la contraseña cierra sus sesiones abiertas:
+su siguiente petición responde `401` y el POS la devuelve a la pantalla de inicio.
+
+## Límites por IP
+
+| Qué | Por defecto | Variable para cambiarlo |
+|---|---|---|
+| `POST /auth/login` | 10 por minuto | `LIMITE_LOGIN` |
+| `POST /web/pedidos` | 10 cada 10 minutos | `LIMITE_PEDIDOS_WEB` |
+| `GET /web/pedidos/{clave}` | 30 por minuto | `LIMITE_CONSULTAS_WEB` |
+| Cualquier otra ruta `/api` | 600 por minuto | `LIMITE_API` |
+
+Además, un usuario queda bloqueado 5 minutos tras 5 claves malas **desde la misma IP**.

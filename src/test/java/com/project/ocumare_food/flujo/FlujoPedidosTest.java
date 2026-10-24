@@ -1,6 +1,6 @@
 package com.project.ocumare_food.flujo;
 
-import com.project.ocumare_food.model.enums.Rol;
+import com.project.ocumare_food.usuarios.model.Rol;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -98,6 +98,17 @@ No hace falta crear tablas. El programa las crea solo la primera vez que arranca
 > recomendada es pasar la cuenta a **Pay As You Go**. Lo que ya es gratis sigue costando 0 $ y
 > Oracle deja de recuperar la máquina; solo se cobraría si creas recursos de pago a propósito.
 
+### Cerrar la base de datos a todo lo que no sea el servidor
+
+Con la IP del servidor ya en la mano, vuelve a Aiven: abre el servicio `mysql-ocumare` →
+**Service settings → Cloud and network → Allowed IP addresses** (o **Network**, según la versión
+de la consola). Quita `0.0.0.0/0` y agrega `IP_DEL_SERVIDOR/32`. Así, aunque alguien consiguiera la
+contraseña de la base, no podría conectarse desde otro lugar.
+
+> Si tu plan gratis no muestra esa opción, no pasa nada: la base igual exige contraseña y conexión
+> cifrada (`sslMode=REQUIRED`). Solo asegúrate de que la contraseña de Aiven no salga de `ocumare.env`.
+> Si algún día necesitas entrar a la base desde tu PC, agrega tu IP un rato y luego quítala.
+
 ### Probar la conexión 💻
 
 Abre **PowerShell** y escribe:
@@ -438,6 +449,8 @@ La web antigua en GitHub Pages enviaba los pedidos a Google Apps Script. La nuev
 | No llegan avisos por Telegram | Verifica `TELEGRAM_TOKEN` y `TELEGRAM_CHAT_ID` y escríbele primero al bot desde ese chat. |
 | La web dice que no está recibiendo pedidos | No hay turno abierto en **Caja**. |
 | La tasa no se actualiza sola | `sudo journalctl -u ocumare \| grep "Tasa BCV"`. Si el servicio de la tasa falla, ponla a mano mientras tanto. |
+| Un cliente o el POS ven "Demasiadas peticiones" | Es el freno contra bots (límites por IP). Si pasa con clientes de verdad, sube el número en `ocumare.env` (`LIMITE_PEDIDOS_WEB`, `LIMITE_API`…) y reinicia: `sudo systemctl restart ocumare`. |
+| A un mesero lo sacó del POS de repente | Alguien de gerencia lo desactivó, le cambió el rol o la contraseña: las sesiones viejas se cierran solas. Que vuelva a entrar. |
 | Un mesero olvidó su contraseña | Un gerente o administrador le pone una nueva desde **Personal**. |
 | Un gerente o administrador olvidó su contraseña | Otro **administrador** se la cambia desde **Personal**. Por eso conviene tener dos (paso 9). |
 
@@ -461,4 +474,14 @@ df -h /                                # espacio en disco del servidor
   compartido, cámbiala en Aiven (**Users → Reset password**) y actualízala en `ocumare.env`.
 - El programa solo escucha dentro del servidor (`127.0.0.1:8080`). Desde internet únicamente se
   llega a través de Caddy con HTTPS.
-- El inicio de sesión del POS se bloquea 5 minutos después de 5 intentos fallidos.
+- La sesión del POS va en una cookie `HttpOnly` + `Secure` + `SameSite=Strict`: el código de la página no
+  la puede leer (ni un posible ataque XSS robarla) y otras páginas no pueden usarla.
+- Al desactivar a alguien, cambiarle el rol o la contraseña, sus sesiones abiertas se cierran en su
+  siguiente clic (no hay que esperar a que venzan).
+- El inicio de sesión de un usuario se bloquea 5 minutos tras 5 claves malas desde la misma IP, y
+  hay límites por IP para el login, los pedidos web y la API (freno contra bots).
+- La web y el POS envían cabeceras de seguridad: solo ejecutan scripts propios (CSP), no se pueden
+  meter en un iframe de otro sitio y el navegador recuerda usar siempre HTTPS (HSTS).
+- La base de Aiven solo acepta conexiones desde la IP del servidor (paso 2) y siempre cifradas.
+- El repositorio de GitHub es público: nunca subas `ocumare.env`, respaldos ni llaves (`.gitignore` ya
+  los excluye). GitHub revisa cada semana las librerías (Dependabot) y avisa si alguna tiene una falla.
