@@ -1,9 +1,9 @@
 package com.project.ocumare_food.flujo;
 
 import com.jayway.jsonpath.JsonPath;
-import com.project.ocumare_food.model.Usuario;
-import com.project.ocumare_food.model.enums.Rol;
-import com.project.ocumare_food.repository.UsuarioRepository;
+import com.project.ocumare_food.usuarios.model.Usuario;
+import com.project.ocumare_food.usuarios.model.Rol;
+import com.project.ocumare_food.usuarios.repository.UsuarioRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;

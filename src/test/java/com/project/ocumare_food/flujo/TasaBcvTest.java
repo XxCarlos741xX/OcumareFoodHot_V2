@@ -1,8 +1,8 @@
 package com.project.ocumare_food.flujo;
 
-import com.project.ocumare_food.model.enums.Rol;
-import com.project.ocumare_food.service.ConsultaBcv;
-import com.project.ocumare_food.service.OperacionService;
+import com.project.ocumare_food.usuarios.model.Rol;
+import com.project.ocumare_food.moneda.bcv.ConsultaBcv;
+import com.project.ocumare_food.turnos.OperacionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
