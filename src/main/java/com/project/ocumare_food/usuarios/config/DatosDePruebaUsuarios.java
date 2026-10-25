@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
  * SOLO en desarrollo (perfil dev): usuarios de ejemplo para probar la app en el PC.
  * En producción esta clase no existe.
  *
- * Usuarios: admin / admin123, gerente / gerente123, ana / ana12345 (mesero).
+ * Usuarios: admin / admin123, gerente / gerente123, caja / caja12345 (cajero), ana / ana12345 (mesero).
  */
 @Component
 @Profile("dev")
@@ -50,6 +50,11 @@ public class DatosDePruebaUsuarios implements ApplicationRunner {
                     .passwordHash(encoder.encode("ana12345")).rol(Rol.MESERO).build());
             cargo = true;
         }
-        if (cargo) log.info("Datos de prueba cargados: usuarios gerente / ana.");
+        if (!usuarios.existsByUsername("caja")) {
+            usuarios.save(Usuario.builder().nombre("Carla Caja").username("caja")
+                    .passwordHash(encoder.encode("caja12345")).rol(Rol.CAJERO).build());
+            cargo = true;
+        }
+        if (cargo) log.info("Datos de prueba cargados: usuarios gerente / caja / ana.");
     }
 }

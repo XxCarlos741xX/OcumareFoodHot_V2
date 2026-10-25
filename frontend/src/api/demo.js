@@ -35,6 +35,7 @@ function crearDatos() {
     { id: 1, nombre: 'Administrador', username: 'admin', password: 'admin123', rol: 'ADMIN', activo: true },
     { id: 2, nombre: 'María Gerente', username: 'gerente', password: 'gerente123', rol: 'GERENTE', activo: true },
     { id: 3, nombre: 'Ana Pérez', username: 'ana', password: 'ana12345', rol: 'MESERO', activo: true },
+    { id: 4, nombre: 'Carla Caja', username: 'caja', password: 'caja12345', rol: 'CAJERO', activo: true },
   ]
   const categorias = [
     { id: 1, nombre: 'Hamburguesas', orden: 1 },
@@ -138,7 +139,8 @@ function cerrarSiToca(p) {
 }
 
 const resumen = (p) => ({ id: p.id, numeroDiario: p.numeroDiario, tipo: p.tipo, estado: p.estado, mesaNumero: p.mesaNumero,
-  mesero: p.mesero, clienteNombre: p.clienteNombre, totalUsd: p.totalUsd, totalBs: p.totalBs, creadoEn: p.creadoEn })
+  mesero: p.mesero, clienteNombre: p.clienteNombre, totalUsd: p.totalUsd, totalBs: p.totalBs, creadoEn: p.creadoEn,
+  entrega: p.tipo === 'WEB' ? (p.direccionEntrega ? 'DELIVERY' : 'RETIRO') : null })
 
 const mesaResp = (m) => {
   const p = db.pedidos.find((x) => x.mesaId === m.id && abiertos.includes(x.estado))
@@ -322,6 +324,8 @@ function responder(ruta, metodo, b, token) {
     const sub = x[2] ?? ''
     const editable = () => { if (!abiertos.includes(p.estado)) throw new Falla(409, `El pedido #${p.numeroDiario} ya no se puede modificar`) }
     if (!sub && metodo === 'GET') return p
+    if (sub === '/bitacora') return []
+    if (sub === '/reimprimir') return p
     if (sub === '/items' && metodo === 'POST') { editable(); agregar(p, b); return totales(p) }
     if (sub.startsWith('/items/') && metodo === 'DELETE') {
       editable()
@@ -489,5 +493,8 @@ function responder(ruta, metodo, b, token) {
     const suma = (k) => r2(dias.reduce((s, d) => s + d[k], 0))
     return { desde, hasta, recaudadoUsd: suma('recaudadoUsd'), recaudadoBs: suma('recaudadoBs'), totalEquivUsd: suma('totalEquivUsd'), dias }
   }
+  // La demo no tiene impresora ni bitácora: responde vacío para que las pantallas se vean.
+  if (camino === '/api/comandas/estado') return { impresorasActivas: 0, ultimaConexion: null, conectada: false, minutosSinConexion: null, pendientes: 0, pendienteMasVieja: null, minutosPendienteMasVieja: null }
+  if (camino === '/api/comandas' || camino === '/api/pedidos/bitacora' || (camino === '/api/impresoras' && metodo === 'GET')) return []
   throw new Falla(404, `Ruta de demo no implementada: ${metodo} ${camino}`)
 }

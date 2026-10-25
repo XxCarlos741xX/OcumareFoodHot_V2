@@ -20,4 +20,13 @@ public record UsuarioActual(Long id, String username, Rol rol) {
     public boolean esAdmin() {
         return rol == Rol.ADMIN;
     }
+
+    /** Cajero, gerente o administrador. */
+    public boolean esCaja() {
+        return rol != null && rol.esCaja();
+    }
+
+    public boolean esGerencia() {
+        return rol != null && rol.esGerencia();
+    }
 }

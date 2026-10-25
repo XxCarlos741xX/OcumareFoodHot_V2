@@ -5,9 +5,9 @@ import { useOperacion } from '../auth/OperacionContext'
 import { leerMonto } from '../lib/dinero'
 import { useAviso } from './Aviso'
 
-/** Lo que se ve cuando no hay turno abierto. El gerente lo puede abrir aquí mismo. */
+/** Lo que se ve cuando no hay turno abierto. El cajero o el gerente lo pueden abrir aquí mismo. */
 export default function SinTurno() {
-  const { esGerencia } = useAuth()
+  const { esCaja } = useAuth()
   const { refrescar } = useOperacion()
   const aviso = useAviso()
   const hora = new Date().getHours()
@@ -16,11 +16,11 @@ export default function SinTurno() {
   const [fondoBs, setFondoBs] = useState('')
   const [enviando, setEnviando] = useState(false)
 
-  if (!esGerencia) {
+  if (!esCaja) {
     return (
       <section className="vacio">
         <h2>No hay un turno abierto</h2>
-        <p>Pide al gerente que abra el turno para empezar a tomar pedidos.</p>
+        <p>Pide al cajero o al gerente que abra el turno para empezar a tomar pedidos.</p>
       </section>
     )
   }

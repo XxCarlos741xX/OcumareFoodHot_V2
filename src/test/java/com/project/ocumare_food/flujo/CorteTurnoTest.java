@@ -14,8 +14,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Un turno completo con números conocidos, y su corte.
  *
  * Fondo inicial: $20 y Bs 500. Tasa: 40.
- *  - Mesero A, mesa 1: 2 hamburguesas = $11.00 → paga $5 efectivo + Bs 240 pago móvil → entregado → PAGADO
- *  - Mesero B, para llevar: 2 refrescos = $2.50 → paga Bs 100 efectivo (aún no entregado)
+ *  - Mesero A, mesa 1: 2 hamburguesas = $11.00 → la caja cobra $5 efectivo + Bs 240 pago móvil → entregado → PAGADO
+ *  - Mesero B, para llevar: 2 refrescos = $2.50 → la caja cobra Bs 100 efectivo (aún no entregado)
  *  - Web: 1 hamburguesa = $5.50 → sin pagar
  *  - Mesero A, para llevar: 1 refresco → ANULADO
  *
@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Transactional
 class CorteTurnoTest extends ApiTest {
 
-    String gerente, meseroA, meseroB;
+    String gerente, meseroA, meseroB, cajero;
     long hamburguesa, refresco, mesa1, turnoId, pedidoWeb;
 
     @BeforeEach
@@ -35,6 +35,7 @@ class CorteTurnoTest extends ApiTest {
         gerente = crearYEntrar("gerente-corte", Rol.GERENTE);
         meseroA = crearYEntrar("ana-corte", Rol.MESERO);
         meseroB = crearYEntrar("beto-corte", Rol.MESERO);
+        cajero = crearYEntrar("caja-corte", Rol.CAJERO);
 
         long cat = id(post(gerente, "/api/categorias", "{\"nombre\":\"Comida\"}"));
         hamburguesa = id(post(gerente, "/api/productos", "{\"nombre\":\"Hamburguesa\",\"precioUsd\":5.5,\"categoriaId\":" + cat + "}"));
@@ -48,8 +49,8 @@ class CorteTurnoTest extends ApiTest {
         // Mesero A, mesa 1
         long p1 = id(post(meseroA, "/api/pedidos", "{\"tipo\":\"MESA\",\"mesaId\":" + mesa1
                 + ",\"items\":[{\"productoId\":" + hamburguesa + ",\"cantidad\":2}]}"));
-        post(meseroA, "/api/pedidos/" + p1 + "/pagos", "{\"metodo\":\"EFECTIVO_USD\",\"monto\":5}").andExpect(status().isOk());
-        post(meseroA, "/api/pedidos/" + p1 + "/pagos", "{\"metodo\":\"PAGO_MOVIL\",\"monto\":240,\"referencia\":\"111\"}")
+        post(cajero, "/api/pedidos/" + p1 + "/pagos", "{\"metodo\":\"EFECTIVO_USD\",\"monto\":5}").andExpect(status().isOk());
+        post(cajero, "/api/pedidos/" + p1 + "/pagos", "{\"metodo\":\"PAGO_MOVIL\",\"monto\":240,\"referencia\":\"111\"}")
                 .andExpect(status().isOk());
         for (String e : new String[]{"EN_PREPARACION", "LISTO", "ENTREGADO"}) {
             patch(meseroA, "/api/pedidos/" + p1 + "/estado", "{\"estado\":\"" + e + "\"}").andExpect(status().isOk());
@@ -57,7 +58,7 @@ class CorteTurnoTest extends ApiTest {
 
         // Mesero B, para llevar pagado en Bs efectivo
         long p2 = id(post(meseroB, "/api/pedidos", "{\"tipo\":\"PARA_LLEVAR\",\"items\":[{\"productoId\":" + refresco + ",\"cantidad\":2}]}"));
-        post(meseroB, "/api/pedidos/" + p2 + "/pagos", "{\"metodo\":\"EFECTIVO_BS\",\"monto\":100}").andExpect(status().isOk());
+        post(cajero, "/api/pedidos/" + p2 + "/pagos", "{\"metodo\":\"EFECTIVO_BS\",\"monto\":100}").andExpect(status().isOk());
 
         // Web sin pagar
         post(null, "/api/web/pedidos", "{\"claveExterna\":\"corte-web-001\",\"clienteNombre\":\"Luis\",\"clienteTelefono\":\"04141234567\","
@@ -146,7 +147,7 @@ class CorteTurnoTest extends ApiTest {
         long noche = id(post(gerente, "/api/turnos/abrir", "{\"tipo\":\"NOCHE\"}").andExpect(status().isCreated()));
 
         // El pedido web del turno de día se cobra de noche
-        post(meseroB, "/api/pedidos/" + pedidoWeb + "/pagos", "{\"metodo\":\"EFECTIVO_USD\",\"monto\":5.5}")
+        post(cajero, "/api/pedidos/" + pedidoWeb + "/pagos", "{\"metodo\":\"EFECTIVO_USD\",\"monto\":5.5}")
                 .andExpect(status().isOk());
 
         get(gerente, "/api/turnos/" + noche + "/corte")

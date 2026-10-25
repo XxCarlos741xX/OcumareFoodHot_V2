@@ -23,6 +23,7 @@ class FlujoPedidosTest extends ApiTest {
 
     String tokenGerente;
     String tokenMesero;
+    String tokenCajero;
     long hamburguesa;   // $5.50
     long refresco;      // $1.25
     long mesa1;
@@ -32,6 +33,7 @@ class FlujoPedidosTest extends ApiTest {
         tokenAdmin = login("admin", "admin123");
         tokenGerente = crearYEntrar("gerente-flujo", Rol.GERENTE);
         tokenMesero = crearYEntrar("mesero-flujo", Rol.MESERO);
+        tokenCajero = crearYEntrar("cajero-flujo", Rol.CAJERO);
 
         long cat = id(post(tokenGerente, "/api/categorias", "{\"nombre\":\"Hamburguesas\",\"orden\":1}")
                 .andExpect(status().isCreated()));
@@ -54,7 +56,7 @@ class FlujoPedidosTest extends ApiTest {
     }
 
     private ResultActions pagar(long pedido, String metodo, String monto, String referencia) throws Exception {
-        return post(tokenMesero, "/api/pedidos/" + pedido + "/pagos", "{\"metodo\":\"" + metodo + "\",\"monto\":" + monto
+        return post(tokenCajero, "/api/pedidos/" + pedido + "/pagos", "{\"metodo\":\"" + metodo + "\",\"monto\":" + monto
                 + (referencia == null ? "" : ",\"referencia\":\"" + referencia + "\"") + "}");
     }
 
@@ -71,7 +73,7 @@ class FlujoPedidosTest extends ApiTest {
     void sinTurnoAbiertoNoSeTomanPedidos() throws Exception {
         pedidoMesa(mesa1, hamburguesa, 1)
                 .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.mensaje").value("No hay un turno abierto. Pide al gerente que abra el turno."));
+                .andExpect(jsonPath("$.mensaje").value("No hay un turno abierto. Pide al cajero o al gerente que abra el turno."));
     }
 
     @Test
@@ -261,8 +263,11 @@ class FlujoPedidosTest extends ApiTest {
 
         // Reintento con la misma clave: mismo pedido, no se duplica
         post(null, "/api/web/pedidos", pedidoWeb("clave-web-0001", "")).andExpect(jsonPath("$.numero").value(numero));
-        get(tokenMesero, "/api/pedidos").andExpect(jsonPath("$.length()").value(1))
-                .andExpect(jsonPath("$[0].tipo").value("WEB"));
+        get(tokenCajero, "/api/pedidos").andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].tipo").value("WEB"))
+                .andExpect(jsonPath("$[0].entrega").value("RETIRO"));
+        // El mesero no ve los pedidos web en su lista (los atiende el cajero)
+        get(tokenMesero, "/api/pedidos").andExpect(jsonPath("$.length()").value(0));
 
         get(null, "/api/web/pedidos/clave-web-0001").andExpect(status().isOk())
                 .andExpect(jsonPath("$.estado").value("ABIERTO"));

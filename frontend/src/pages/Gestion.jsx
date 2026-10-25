@@ -6,6 +6,7 @@ const SECCIONES = [
   { a: '/carta', titulo: 'Carta', texto: 'Productos, precios, agotados y categorías.' },
   { a: '/salon', titulo: 'Salón', texto: 'Mesas: agregar, retirar, ordenar y renumerar.' },
   { a: '/personal', titulo: 'Personal', texto: 'Quién puede entrar al sistema y con qué rol.' },
+  { a: '/impresoras', titulo: 'Impresoras', texto: 'La impresora de cocina: conectarla, probarla y ver si está en línea.' },
 ]
 
 export default function Gestion() {

@@ -109,7 +109,7 @@ function resumenCuadre(c) {
  * Conteo de caja en un desplegable cerrado por defecto: de entrada solo se ven los totales.
  * Si el turno está cerrado y no se ha contado, permite registrarlo aquí.
  */
-export function ConteoCaja({ c, turnoId, cerrado, onActualizado }) {
+export function ConteoCaja({ c, turnoId, cerrado, puedeCorregir = true, onActualizado }) {
   const aviso = useAviso()
   const [usdTxt, setUsdTxt] = useState('')
   const [bsTxt, setBsTxt] = useState('')
@@ -162,12 +162,13 @@ export function ConteoCaja({ c, turnoId, cerrado, onActualizado }) {
         </table>
         </div>
         {contado && c.contadoPor && <p className="nota">Contó {c.contadoPor}.</p>}
-        {cerrado && !editando && (
+        {cerrado && puedeCorregir && !editando && (
           <button type="button" className="btn btn-linea" onClick={() => setEditando(true)}>
             {contado ? 'Corregir conteo' : 'Registrar conteo'}
           </button>
         )}
         {!cerrado && <p className="nota">El conteo se registra al cerrar el turno.</p>}
+        {cerrado && !puedeCorregir && <p className="nota">Si hay que corregir el conteo, pídeselo al gerente.</p>}
         {editando && (
           <form className="form" onSubmit={guardar}>
             <div className="fila-2">

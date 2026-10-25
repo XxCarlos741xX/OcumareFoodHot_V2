@@ -15,7 +15,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** Pedidos del personal (MESERO, GERENTE, ADMIN). */
+/**
+ * Pedidos del personal (MESERO, CAJERO, GERENTE, ADMIN).
+ * Cobrar y ver la bitácora: CAJERO, GERENTE y ADMIN (SecurityConfig). Anular: GERENTE y ADMIN (servicio).
+ */
 @RestController
 @RequestMapping("/api/pedidos")
 
@@ -30,8 +33,26 @@ public class PedidoController {
     /** Lista del turno abierto (o ?turnoId=). ?soloAbiertos=true para el tablero de cocina/caja. */
     @GetMapping
     public List<PedidoResumen> listar(@RequestParam(required = false) Long turnoId,
-                                      @RequestParam(defaultValue = "false") boolean soloAbiertos) {
-        return pedidos.listar(turnoId, soloAbiertos);
+                                      @RequestParam(defaultValue = "false") boolean soloAbiertos,
+                                      @AuthenticationPrincipal Jwt jwt) {
+        return pedidos.listar(turnoId, soloAbiertos, UsuarioActual.de(jwt));
+    }
+
+    /** Bitácora del turno (por defecto el abierto). ?soloAlertas=true: lo que hay que revisar. */
+    @GetMapping("/bitacora")
+    public List<EventoResponse> bitacoraTurno(@RequestParam(required = false) Long turnoId,
+                                              @RequestParam(defaultValue = "false") boolean soloAlertas) {
+        return pedidos.bitacoraTurno(turnoId, soloAlertas);
+    }
+
+    @GetMapping("/{id}/bitacora")
+    public List<EventoResponse> bitacora(@PathVariable Long id) {
+        return pedidos.bitacora(id);
+    }
+
+    @PostMapping("/{id}/reimprimir")
+    public PedidoResponse reimprimir(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return pedidos.reimprimir(id, UsuarioActual.de(jwt));
     }
 
     @GetMapping("/{id}")
@@ -47,18 +68,21 @@ public class PedidoController {
 
     @PostMapping("/{id}/items")
     public PedidoResponse agregarItems(@PathVariable Long id,
-                                       @RequestBody @NotEmpty @Size(max = MAX_LINEAS) List<@Valid ItemRequest> items) {
-        return pedidos.agregarItems(id, items);
+                                       @RequestBody @NotEmpty @Size(max = MAX_LINEAS) List<@Valid ItemRequest> items,
+                                       @AuthenticationPrincipal Jwt jwt) {
+        return pedidos.agregarItems(id, items, UsuarioActual.de(jwt));
     }
 
     @DeleteMapping("/{id}/items/{detalleId}")
-    public PedidoResponse quitarItem(@PathVariable Long id, @PathVariable Long detalleId) {
-        return pedidos.quitarItem(id, detalleId);
+    public PedidoResponse quitarItem(@PathVariable Long id, @PathVariable Long detalleId,
+                                     @AuthenticationPrincipal Jwt jwt) {
+        return pedidos.quitarItem(id, detalleId, UsuarioActual.de(jwt));
     }
 
     @PatchMapping("/{id}/estado")
-    public PedidoResponse cambiarEstado(@PathVariable Long id, @Valid @RequestBody CambiarEstadoRequest req) {
-        return pedidos.cambiarEstado(id, req.estado());
+    public PedidoResponse cambiarEstado(@PathVariable Long id, @Valid @RequestBody CambiarEstadoRequest req,
+                                        @AuthenticationPrincipal Jwt jwt) {
+        return pedidos.cambiarEstado(id, req.estado(), UsuarioActual.de(jwt));
     }
 
     @PostMapping("/{id}/anular")

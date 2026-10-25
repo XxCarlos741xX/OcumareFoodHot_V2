@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { useOperacion } from '../auth/OperacionContext'
 import { useAviso } from '../components/Aviso'
+import { ListaEventos } from '../components/Bitacora'
 import Hoja from '../components/Hoja'
 import { ESTADOS, METODOS, SIGUIENTE, TIPOS, bs, leerMonto, numero, redondear, usd } from '../lib/dinero'
 import { useCarga } from '../lib/useCarga'
@@ -15,8 +16,10 @@ export default function PedidoDetalle() {
   const { id } = useParams()
   const navegar = useNavigate()
   const aviso = useAviso()
-  const { esGerencia } = useAuth()
+  const { esGerencia, esCaja } = useAuth()
   const { datos: p, setDatos, error } = useCarga(`/api/pedidos/${id}`, 20)
+  const { datos: comandas, recargar: recargarComandas } = useCarga(`/api/comandas?pedidoId=${id}`, 15)
+  const { datos: cocina } = useCarga('/api/comandas/estado')
   const [cobrar, setCobrar] = useState(false)
   const [anular, setAnular] = useState(false)
   const [ocupado, setOcupado] = useState(false)
@@ -27,6 +30,9 @@ export default function PedidoDetalle() {
   const editable = EDITABLES.has(p.estado)
   const siguiente = SIGUIENTE[p.estado]
   const saldado = p.saldoPendienteUsd <= 0.05
+  // Un pedido web nuevo lo acepta la caja (confirma el pago o llama al cliente antes de cocinar).
+  const webPorAceptar = p.tipo === 'WEB' && p.estado === 'ABIERTO'
+  const enCocina = p.detalles.some((d) => d.enviadoCocina)
 
   async function accion(fn, mensaje) {
     setOcupado(true)
@@ -42,10 +48,28 @@ export default function PedidoDetalle() {
   }
 
   const avanzar = () => accion(
-    () => api(`/api/pedidos/${id}/estado`, { method: 'PATCH', body: { estado: siguiente.estado } }),
-    (r) => (r.estado === 'PAGADO' ? 'Pedido entregado y cerrado' : `Pedido ${ESTADOS[r.estado].toLowerCase()}`))
+    async () => {
+      const r = await api(`/api/pedidos/${id}/estado`, { method: 'PATCH', body: { estado: siguiente.estado } })
+      if (siguiente.estado === 'EN_PREPARACION') recargarComandas()
+      return r
+    },
+    (r) => (r.estado === 'PAGADO' ? 'Pedido entregado y cerrado'
+      : r.estado === 'EN_PREPARACION' ? 'Enviado a cocina' : `Pedido ${ESTADOS[r.estado].toLowerCase()}`))
 
-  const quitar = (d) => accion(() => api(`/api/pedidos/${id}/items/${d.id}`, { method: 'DELETE' }), `${d.nombre} quitado`)
+  const quitar = (d) => accion(async () => {
+    const r = await api(`/api/pedidos/${id}/items/${d.id}`, { method: 'DELETE' })
+    if (d.enviadoCocina) recargarComandas()
+    return r
+  }, d.enviadoCocina ? `${d.nombre} quitado. Salió aviso de cancelar en cocina` : `${d.nombre} quitado`)
+
+  const reimprimir = () => accion(async () => {
+    const r = await api(`/api/pedidos/${id}/reimprimir`, { method: 'POST', body: {} })
+    recargarComandas()
+    return r
+  }, 'Se mandó una copia a cocina')
+
+  // Un plato ya enviado a cocina solo lo quita la caja (y la cocina recibe el aviso de cancelar).
+  const puedeQuitar = (d) => editable && p.detalles.length > 1 && (!d.enviadoCocina || esCaja)
 
   return (
     <div className="pagina pagina-detalle">
@@ -82,7 +106,7 @@ export default function PedidoDetalle() {
             <span className="linea-cant">{d.cantidad}</span>
             <span className="linea-nombre">{d.nombre}{d.notas && <small>{d.notas}</small>}</span>
             <span className="linea-monto">{usd(d.subtotalUsd)}</span>
-            {editable && p.detalles.length > 1 && (
+            {puedeQuitar(d) && (
               <button type="button" className="quitar" disabled={ocupado} onClick={() => quitar(d)} aria-label={`Quitar ${d.nombre}`}>×</button>
             )}
           </li>
@@ -91,6 +115,10 @@ export default function PedidoDetalle() {
       {editable && (
         <button type="button" className="btn btn-linea btn-ancho" onClick={() => navegar(`/pedido/${id}/agregar`)}>Agregar productos</button>
       )}
+      {editable && enCocina && !esCaja && (
+        <p className="nota">Lo que ya salió a cocina solo lo puede quitar el cajero o el gerente.</p>
+      )}
+      {cocina?.impresorasActivas > 0 && <EstadoComanda comandas={comandas} />}
 
       <dl className="cuenta">
         {p.costoDeliveryUsd > 0 && <><dt>Envío</dt><dd>{usd(p.costoDeliveryUsd)}</dd></>}
@@ -115,23 +143,66 @@ export default function PedidoDetalle() {
 
       {editable && (
         <div className="acciones-pedido">
-          {siguiente && <button type="button" className="btn btn-oro btn-grande" disabled={ocupado} onClick={avanzar}>{siguiente.accion}</button>}
-          {!saldado && (
+          {siguiente && webPorAceptar && !esCaja && (
+            <p className="nota aviso-web">Este pedido llegó por la web. Lo acepta el cajero y ahí sale a cocina.</p>
+          )}
+          {siguiente && (!webPorAceptar || esCaja) && (
+            <button type="button" className="btn btn-oro btn-grande" disabled={ocupado} onClick={avanzar}>
+              {webPorAceptar ? 'Aceptar y enviar a cocina' : siguiente.accion}
+            </button>
+          )}
+          {!esCaja && !saldado && <p className="nota">El cobro lo registra el cajero.</p>}
+          {esCaja && !saldado && (
             <button type="button" className={`btn btn-grande ${siguiente ? 'btn-linea' : 'btn-oro'}`} disabled={ocupado} onClick={() => setCobrar(true)}>
               Cobrar {usd(p.saldoPendienteUsd)}
             </button>
+          )}
+          {enCocina && (
+            <button type="button" className="btn btn-texto" disabled={ocupado} onClick={reimprimir}>Reimprimir en cocina</button>
           )}
           {esGerencia && p.pagos.length === 0 && (
             <button type="button" className="btn btn-texto btn-peligro" onClick={() => setAnular(true)}>Anular pedido</button>
           )}
         </div>
       )}
+      {esCaja && <BitacoraPedido id={id} version={p} />}
 
       {cobrar && <HojaCobro pedido={p} onCerrar={() => setCobrar(false)}
                             onCobrado={(r) => { setDatos(r); setCobrar(false) }} />}
       {anular && <HojaAnular pedido={p} onCerrar={() => setAnular(false)}
                              onAnulado={(r) => { setDatos(r); setAnular(false) }} />}
     </div>
+  )
+}
+
+const hora = (iso) => new Date(iso).toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' })
+const NOMBRE_COMANDA = { NUEVA: 'Comanda', ADICIONAL: 'Adicional', CANCELADO: 'Aviso de cancelar', ANULADO: 'Aviso de anulado', REIMPRESION: 'Copia' }
+
+/** Si lo último que se mandó a cocina ya salió en la impresora (solo cuando hay una impresora registrada). */
+function EstadoComanda({ comandas }) {
+  if (!comandas?.length) return null
+  const ultima = comandas[comandas.length - 1]
+  const nombre = NOMBRE_COMANDA[ultima.tipo] ?? 'Comanda'
+  const texto = {
+    IMPRESA: `${nombre} impresa en cocina a las ${hora(ultima.impresaEn)}`,
+    PENDIENTE: `${nombre} esperando la impresora de cocina…`,
+    FALLIDA: `${nombre}: la impresora no pudo imprimirla. Revisa el papel y usa Reimprimir.`,
+    VENCIDA: `${nombre} sin imprimir. Avisa a cocina de palabra o usa Reimprimir.`,
+  }[ultima.estado]
+  return <p className={`estado-comanda comanda-${ultima.estado.toLowerCase()}`} role="status">{texto}</p>
+}
+
+/** Historial del pedido (solo caja y gerencia). Se recarga cuando cambia el pedido. */
+function BitacoraPedido({ id, version }) {
+  const { datos, recargar } = useCarga(`/api/pedidos/${id}/bitacora`)
+  const marca = `${version.estado}-${version.detalles.length}-${version.pagos.length}-${version.totalUsd}`
+  useEffect(() => { recargar() }, [marca, recargar])
+  if (!datos?.length) return null
+  return (
+    <details className="desplegable bloque-bitacora">
+      <summary><span>Historial del pedido</span><span className="resumen-cuadre">{datos.length}</span></summary>
+      <div className="desplegable-cuerpo"><ListaEventos eventos={datos} /></div>
+    </details>
   )
 }
 

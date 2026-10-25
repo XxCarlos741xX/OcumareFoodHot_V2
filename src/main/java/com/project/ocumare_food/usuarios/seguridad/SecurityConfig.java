@@ -49,12 +49,15 @@ import java.util.List;
  * (ver SesionCookie). También se acepta "Authorization: Bearer <token>" (pruebas y herramientas).
  *
  * Matriz de permisos (lo que no está aquí exige al menos estar autenticado):
- *  - Público:            login, menú (GET) y envío de pedidos desde la web.
- *  - MESERO/GERENTE/ADMIN: pedidos, ver mesas, ver tasa vigente, ver turno abierto.
- *  - GERENTE/ADMIN:      menú (crear/editar), mesas (crear/editar), tasa de cambio,
- *                        abrir/cerrar turno, usuarios, dashboard.
+ *  - Público:            login, menú (GET), envío de pedidos desde la web y las rutas de las impresoras
+ *                        (/api/impresion/**, que se identifican con su propio token).
+ *  - Todo el personal:   pedidos (tomar, agregar, enviar a cocina, reimprimir), ver mesas, tasa y turno, comandas.
+ *  - CAJERO/GERENTE/ADMIN: cobrar, bitácora de pedidos, abrir y cerrar turno, ver el corte del turno.
+ *  - GERENTE/ADMIN:      menú, mesas, tasa, historial de turnos y corrección del conteo, usuarios,
+ *                        dashboard, impresoras.
  *  - ADMIN:              /api/admin/**.
- * Reglas finas (p. ej. "un gerente solo crea meseros") se validan en el servicio.
+ * Reglas finas (p. ej. "un gerente solo crea meseros y cajeros", "el mesero no acepta pedidos web")
+ * se validan en el servicio.
  */
 @Configuration
 @EnableMethodSecurity
@@ -92,7 +95,8 @@ public class SecurityConfig {
             RUTAS.matcher(HttpMethod.GET, "/api/menu/**"),
             RUTAS.matcher(HttpMethod.POST, "/api/web/pedidos"),
             RUTAS.matcher(HttpMethod.GET, "/api/web/pedidos/*"),
-            RUTAS.matcher(HttpMethod.GET, "/api/imagenes/*"));
+            RUTAS.matcher(HttpMethod.GET, "/api/imagenes/*"),
+            RUTAS.matcher("/api/impresion/**"));
 
     private static boolean esApi(jakarta.servlet.http.HttpServletRequest req) {
         return req.getRequestURI().startsWith(req.getContextPath() + "/api/");
@@ -127,13 +131,20 @@ public class SecurityConfig {
                 // Solo administrador
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 // Gerencia
-                .requestMatchers("/api/usuarios/**", "/api/dashboard/**").hasAnyRole("GERENTE", "ADMIN")
+                .requestMatchers("/api/usuarios/**", "/api/dashboard/**", "/api/impresoras/**").hasAnyRole("GERENTE", "ADMIN")
+                // Caja (cajero y gerencia)
+                .requestMatchers(HttpMethod.POST, "/api/pedidos/*/pagos").hasAnyRole("CAJERO", "GERENTE", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/pedidos/bitacora", "/api/pedidos/*/bitacora")
+                        .hasAnyRole("CAJERO", "GERENTE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/turnos/abrir", "/api/turnos/cerrar")
+                        .hasAnyRole("CAJERO", "GERENTE", "ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/turnos/*/corte").hasAnyRole("CAJERO", "GERENTE", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/productos/**", "/api/categorias/**", "/api/mesas/**",
                                  "/api/tasas/vigente", "/api/turnos/actual").authenticated()
                 .requestMatchers("/api/productos/**", "/api/categorias/**", "/api/mesas/**",
                                  "/api/tasas/**", "/api/turnos/**").hasAnyRole("GERENTE", "ADMIN")
                 // Operación diaria
-                .requestMatchers("/api/pedidos/**").hasAnyRole("MESERO", "GERENTE", "ADMIN")
+                .requestMatchers("/api/pedidos/**", "/api/comandas/**").hasAnyRole("MESERO", "CAJERO", "GERENTE", "ADMIN")
                 .anyRequest().authenticated())
             .oauth2ResourceServer(o -> o
                 .bearerTokenResolver(tokenResolver)
@@ -153,7 +164,7 @@ public class SecurityConfig {
         };
     }
 
-    /** Lee el claim "roles" del token y lo convierte en ROLE_MESERO / ROLE_GERENTE / ROLE_ADMIN. */
+    /** Lee el claim "roles" del token y lo convierte en ROLE_MESERO / ROLE_CAJERO / ROLE_GERENTE / ROLE_ADMIN. */
     @Bean
     JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtGrantedAuthoritiesConverter roles = new JwtGrantedAuthoritiesConverter();

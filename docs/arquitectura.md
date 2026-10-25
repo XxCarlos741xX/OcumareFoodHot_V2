@@ -18,6 +18,7 @@ Todos viven en `src/main/java/com/project/ocumare_food/`.
 | `turnos` | Abrir turno, turno actual | `TurnoService`, `model` (Turno…), `dto` (TurnoResponse) |
 | `pedidos` | Pedidos del POS y de la web, pagos | `ConsultasPedidos`, `ResumenVentas`, `PedidoWebRecibido`, `model` |
 | `caja` | Cierre de turno, conteo de caja, dashboard | (nadie lo usa) |
+| `cocina` | Comandas de cocina, impresoras, rutas para CloudPRNT y el puente | (nadie lo usa) |
 | `notificaciones` | Aviso a Telegram de pedidos web | (nadie lo usa) |
 
 **La API pública de un módulo** es lo que está en su paquete raíz (por ejemplo `pedidos/ConsultasPedidos.java`)
@@ -31,6 +32,7 @@ flowchart TD
     caja --> pedidos
     caja --> turnos
     notificaciones -. escucha PedidoWebRecibido .-> pedidos
+    cocina -. escucha ComandaSolicitada .-> pedidos
     pedidos --> catalogo
     pedidos --> salon
     pedidos --> turnos
@@ -49,6 +51,11 @@ Todos usan `compartido` y `usuarios` (`UsuarioActual`). Casos especiales:
   venta por mesero, recaudo por método, mesero y día).
 - **notificaciones reacciona a un evento.** Pedidos publica `PedidoWebRecibido` y notificaciones avisa
   a Telegram después de guardar. Pedidos no sabe que Telegram existe.
+- **cocina reacciona a un evento.** Pedidos publica `ComandaSolicitada` cuando un pedido entra a cocina,
+  se le agregan o quitan platos, se anula o se reimprime. Cocina guarda la comanda en la misma
+  transacción y la impresora la viene a buscar. Pedidos no sabe que hay impresoras.
+- **La bitácora vive en pedidos** (`EventoPedido`): cada acción sobre un pedido deja una línea con quién
+  la hizo. Lo delicado (quitar platos ya enviados a cocina, anular, reimprimir) queda marcado como alerta.
 
 ## Reglas para no degradar la estructura
 

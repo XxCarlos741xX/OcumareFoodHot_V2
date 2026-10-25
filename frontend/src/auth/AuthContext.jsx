@@ -75,6 +75,8 @@ export function AuthProvider({ children }) {
     return {
       usuario,
       esGerencia: usuario?.rol === 'GERENTE' || usuario?.rol === 'ADMIN',
+      // Cajero, gerente o admin: cobran, aceptan pedidos web, abren y cierran el turno y ven la bitácora.
+      esCaja: Boolean(usuario) && usuario.rol !== 'MESERO',
       entrar,
       salir,
     }

@@ -30,6 +30,7 @@ public class Usuario {
     @Column(name = "password_hash", nullable = false, length = 100)
     private String passwordHash;
 
+    /** En MySQL es un ENUM. Si la base se creó antes del rol CAJERO, ver ActualizarColumnaRol. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Rol rol;

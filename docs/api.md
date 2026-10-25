@@ -23,19 +23,54 @@ Errores: `{ "status", "error", "mensaje", "campos" }`.
 | GET | /productos, /productos/{id}, /categorias, /mesas | Consultas (mesas trae `pedidoAbiertoId` si está ocupada) |
 | GET | /tasas/vigente, /turnos/actual | Tasa y turno en curso |
 
-## Pedidos (Mesero, Gerente, Admin)
+## Roles
+
+| Rol | Puede |
+|---|---|
+| MESERO | Tomar pedidos, agregar platos, enviarlos a cocina, quitar lo que todavía no salió a cocina, reimprimir. Su lista de pedidos muestra solo los que tomó él. |
+| CAJERO | Todo lo del mesero, más: cobrar, aceptar pedidos web, quitar platos ya enviados a cocina, ver todos los pedidos y la bitácora, abrir y cerrar el turno con su conteo. |
+| GERENTE | Todo lo del cajero, más: anular, carta, mesas, tasa, personal (meseros y cajeros), ventas, historial de turnos, corregir conteos, impresoras. |
+| ADMIN | Todo, incluso crear gerentes y administradores. |
+
+## Pedidos (todo el personal)
 | Método | Ruta | Uso |
 |---|---|---|
-| GET | /pedidos?soloAbiertos=&turnoId= | Pedidos del turno |
-| GET | /pedidos/{id} | Detalle con líneas y pagos |
+| GET | /pedidos?soloAbiertos=&turnoId= | Pedidos del turno (el mesero solo ve los suyos). Los web traen `entrega`: DELIVERY o RETIRO |
+| GET | /pedidos/{id} | Detalle con líneas (cada una con `enviadoCocina`) y pagos |
 | POST | /pedidos | `{tipo: MESA\|PARA_LLEVAR\|DELIVERY, mesaId?, cliente…, items:[{productoId, cantidad, notas}]}` |
-| POST | /pedidos/{id}/items | Agregar líneas `[{productoId, cantidad}]` |
-| DELETE | /pedidos/{id}/items/{detalleId} | Quitar línea |
-| PATCH | /pedidos/{id}/estado | `{estado}` un paso: ABIERTO→EN_PREPARACION→LISTO→ENTREGADO |
-| POST | /pedidos/{id}/pagos | `{metodo, monto, referencia?}` (monto en la moneda del método) |
-| POST | /pedidos/{id}/anular | `{motivo}` — solo Gerente/Admin y sin pagos |
+| POST | /pedidos/{id}/items | Agregar líneas `[{productoId, cantidad}]`. Si el pedido ya está en cocina, sale una comanda ADICIONAL |
+| DELETE | /pedidos/{id}/items/{detalleId} | Quitar línea. Si ya salió a cocina: solo caja o gerencia, y sale una comanda de CANCELADO |
+| PATCH | /pedidos/{id}/estado | `{estado}` un paso: ABIERTO→EN_PREPARACION→LISTO→ENTREGADO. Al pasar a EN_PREPARACION sale la comanda. Un pedido WEB solo lo pasa la caja (aceptar) |
+| POST | /pedidos/{id}/reimprimir | Copia de lo enviado a cocina (comanda REIMPRESIÓN) |
+| POST | /pedidos/{id}/pagos | **Cajero, Gerente, Admin.** `{metodo, monto, referencia?}` (monto en la moneda del método) |
+| POST | /pedidos/{id}/anular | `{motivo}` — solo Gerente/Admin y sin pagos. Si estaba en cocina, sale una comanda de ANULADO |
+| GET | /pedidos/{id}/bitacora | **Cajero, Gerente, Admin.** Quién hizo qué y cuándo |
+| GET | /pedidos/bitacora?turnoId=&soloAlertas= | **Cajero, Gerente, Admin.** Bitácora del turno (por defecto el abierto). Alertas: platos quitados después de ir a cocina, anulaciones y reimpresiones |
 
 Un pedido pasa solo a **PAGADO** cuando está ENTREGADO y su saldo es 0.
+
+## Comandas de cocina e impresoras
+
+| Método | Ruta | Quién | Uso |
+|---|---|---|---|
+| GET | /comandas?pedidoId= | Personal | Comandas de un pedido (o las últimas 30): `estado` PENDIENTE, IMPRESA, FALLIDA o VENCIDA |
+| GET | /comandas/estado | Personal | Impresoras activas, si están en línea, comandas pendientes |
+| GET/POST | /impresoras | Gerente, Admin | Listar / registrar `{nombre, columnas}` → devuelve el token una sola vez y las rutas para configurar |
+| DELETE | /impresoras/{id} | Gerente, Admin | Desactivar (su dirección deja de servir) |
+| POST | /impresoras/prueba | Gerente, Admin | Manda una hoja de prueba |
+
+Rutas que usa la impresora (sin sesión, con el token de la impresora en la dirección; token falso = 404):
+
+| Método | Ruta | Uso |
+|---|---|---|
+| POST | /impresion/cloudprnt/{token} | Star CloudPRNT: la impresora pregunta; responde `{jobReady, mediaTypes:["text/plain"], jobToken}` |
+| GET | /impresion/cloudprnt/{token}?token= | Descarga la hoja en texto plano |
+| DELETE | /impresion/cloudprnt/{token}?code=&token= | Confirma: código 2xx = impresa; otro = falló (a los 3 fallos se deja de intentar) |
+| GET | /impresion/puente/{token}/siguiente | Puente: 200 con la hoja y `X-Comanda-Id`, o 204 si no hay nada |
+| POST | /impresion/puente/{token}/{id}?ok= | Puente: confirma |
+
+Las comandas de más de 2 horas que no salieron no se imprimen (para que no salga todo lo viejo al
+conectar una impresora). El texto va sin tildes para que cualquier térmica lo imprima bien.
 
 ## Gerencia (Gerente, Admin)
 | Método | Ruta | Uso |
@@ -56,7 +91,10 @@ Un pedido pasa solo a **PAGADO** cuando está ENTREGADO y su saldo es 0.
 - **Pago:** no se acepta más que el saldo (margen $0.05 por redondeo); el vuelto no se registra. Pago móvil, Zelle y transferencia exigen referencia.
 - **Cada pago guarda el turno en que entró el dinero** (para el corte del Paso 4).
 
-## Paso 4 — Cortes de turno y dashboard (Gerente, Admin)
+## Paso 4 — Cortes de turno y dashboard
+
+Abrir y cerrar turno y ver el corte: Cajero, Gerente y Admin. Historial de turnos, corrección del
+conteo y dashboard: solo Gerente y Admin.
 | Método | Ruta | Uso |
 |---|---|---|
 | POST | /turnos/abrir | Ahora acepta `fondoInicialUsd` y `fondoInicialBs` (efectivo para vuelto, opcional) |

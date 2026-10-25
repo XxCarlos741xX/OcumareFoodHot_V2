@@ -1,6 +1,8 @@
 package com.project.ocumare_food.pedidos.dto;
 
 import com.project.ocumare_food.pedidos.model.DetallePedido;
+import com.project.ocumare_food.pedidos.model.EventoPedido;
+import com.project.ocumare_food.pedidos.model.TipoEvento;
 import com.project.ocumare_food.pedidos.model.Pago;
 import com.project.ocumare_food.pedidos.model.Pedido;
 import com.project.ocumare_food.moneda.model.Moneda;
@@ -86,10 +88,24 @@ public final class PedidoDto {
     // ---------- Respuestas ----------
 
     public record DetalleResponse(Long id, Long productoId, String nombre, int cantidad,
-                                  BigDecimal precioUnitarioUsd, BigDecimal subtotalUsd, String notas) {
+                                  BigDecimal precioUnitarioUsd, BigDecimal subtotalUsd, String notas,
+                                  boolean enviadoCocina) {
         static DetalleResponse de(DetallePedido d) {
             return new DetalleResponse(d.getId(), d.getProducto().getId(), d.getNombreProducto(), d.getCantidad(),
-                    d.getPrecioUnitarioUsd(), d.getSubtotalUsd(), d.getNotas());
+                    d.getPrecioUnitarioUsd(), d.getSubtotalUsd(), d.getNotas(), d.isEnviadoCocina());
+        }
+    }
+
+    /** Una línea de la bitácora. {@code usuario} es null cuando lo hizo el cliente desde la web. */
+    public record EventoResponse(Long id, Long pedidoId, Integer numeroPedido, TipoPedido tipoPedido, Integer mesaNumero,
+                                 TipoEvento tipo, String detalle, boolean alerta, String usuario,
+                                 LocalDateTime creadoEn) {
+        public static EventoResponse de(EventoPedido e) {
+            Pedido p = e.getPedido();
+            return new EventoResponse(e.getId(), p.getId(), p.getNumeroDiario(), p.getTipo(),
+                    p.getMesa() == null ? null : p.getMesa().getNumero(),
+                    e.getTipo(), e.getDetalle(), e.isAlerta(),
+                    e.getUsuario() == null ? null : e.getUsuario().getNombre(), e.getCreadoEn());
         }
     }
 
@@ -131,15 +147,21 @@ public final class PedidoDto {
         }
     }
 
-    /** Versión corta para listas (tablero de pedidos del turno). */
+    /**
+     * Versión corta para listas (tablero de pedidos del turno).
+     * {@code entrega}: solo en pedidos web, "DELIVERY" si trae dirección o "RETIRO" si lo buscan en el local.
+     */
     public record PedidoResumen(Long id, Integer numeroDiario, TipoPedido tipo, EstadoPedido estado,
                                 Integer mesaNumero, String mesero, String clienteNombre,
-                                BigDecimal totalUsd, BigDecimal totalBs, LocalDateTime creadoEn) {
+                                BigDecimal totalUsd, BigDecimal totalBs, LocalDateTime creadoEn,
+                                String entrega) {
         public static PedidoResumen de(Pedido p) {
+            String entrega = p.getTipo() != TipoPedido.WEB ? null
+                    : (p.getDireccionEntrega() != null ? "DELIVERY" : "RETIRO");
             return new PedidoResumen(p.getId(), p.getNumeroDiario(), p.getTipo(), p.getEstado(),
                     p.getMesa() == null ? null : p.getMesa().getNumero(),
                     p.getMesero() == null ? null : p.getMesero().getNombre(),
-                    p.getClienteNombre(), p.getTotalUsd(), p.getTotalBs(), p.getCreadoEn());
+                    p.getClienteNombre(), p.getTotalUsd(), p.getTotalBs(), p.getCreadoEn(), entrega);
         }
     }
 }

@@ -4,18 +4,17 @@ import { api } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { useAviso } from '../components/Aviso'
 import Hoja from '../components/Hoja'
+import { ROLES, ROLES_DEL_GERENTE } from '../lib/roles'
 import { useCarga } from '../lib/useCarga'
 
-const ROLES = { MESERO: 'Mesero', GERENTE: 'Gerente', ADMIN: 'Administrador' }
-
-/** Personal: el gerente maneja meseros; el administrador, a todos. */
+/** Personal: el gerente maneja meseros y cajeros; el administrador, a todos. */
 export default function Personal() {
   const { usuario } = useAuth()
   const esAdmin = usuario.rol === 'ADMIN'
   const { datos: usuarios, recargar, error } = useCarga('/api/usuarios')
   const [editar, setEditar] = useState(null)
 
-  const puedeEditar = (u) => esAdmin || u.rol === 'MESERO'
+  const puedeEditar = (u) => esAdmin || ROLES_DEL_GERENTE.includes(u.rol)
   const activos = (usuarios ?? []).filter((u) => u.activo)
   const inactivos = (usuarios ?? []).filter((u) => !u.activo)
 
@@ -36,7 +35,8 @@ export default function Personal() {
         <h1>Personal</h1>
         <p className="resumen">{activos.length} activos</p>
       </div>
-      {!esAdmin && <p className="nota">Puedes agregar y editar meseros. Los gerentes los maneja el administrador.</p>}
+      {!esAdmin && <p className="nota">Puedes agregar y editar meseros y cajeros. Los gerentes los maneja el administrador.</p>}
+      <p className="nota">El mesero toma pedidos y los envía a cocina. El cajero además cobra, acepta los pedidos de la web, abre y cierra el turno y ve el historial de cada pedido.</p>
       <div className="acciones-rapidas">
         <button type="button" className="btn btn-oro" onClick={() => setEditar({})}>Agregar persona</button>
       </div>
@@ -74,7 +74,7 @@ function HojaPersona({ persona, esAdmin, yo, onCerrar, onListo }) {
       ejecutar(() => api('/api/usuarios', { method: 'POST', body: { nombre: f.nombre.trim(), username: f.username.trim(), password: f.password, rol: f.rol } }),
         `${f.nombre.trim()} puede entrar con el usuario ${f.username.trim().toLowerCase()}`)
     } else {
-      ejecutar(() => api(`/api/usuarios/${persona.id}`, { method: 'PUT', body: { nombre: f.nombre.trim(), rol: esAdmin && !soyYo ? f.rol : null } }),
+      ejecutar(() => api(`/api/usuarios/${persona.id}`, { method: 'PUT', body: { nombre: f.nombre.trim(), rol: !soyYo ? f.rol : null } }),
         'Datos guardados')
     }
   }
@@ -89,9 +89,12 @@ function HojaPersona({ persona, esAdmin, yo, onCerrar, onListo }) {
             <label>Contraseña<input type="password" {...campo('password')} required minLength={8} autoComplete="new-password" /></label>
           </>
         )}
-        {esAdmin && !soyYo && (
+        {!soyYo && (
           <label>Rol
-            <select {...campo('rol')}>{Object.entries(ROLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}</select>
+            <select {...campo('rol')}>
+              {Object.entries(ROLES).filter(([k]) => esAdmin || ROLES_DEL_GERENTE.includes(k))
+                .map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+            </select>
           </label>
         )}
         <button className="btn btn-oro btn-grande" disabled={enviando || !f.nombre.trim() || (nueva && f.password.length < 8)}>

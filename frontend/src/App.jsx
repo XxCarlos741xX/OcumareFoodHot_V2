@@ -14,9 +14,10 @@ import CartaGestion from './pages/CartaGestion'
 import Gestion from './pages/Gestion'
 import Personal from './pages/Personal'
 import Ventas from './pages/Ventas'
+import Impresoras from './pages/Impresoras'
 
 function Rutas() {
-  const { usuario, esGerencia } = useAuth()
+  const { usuario, esGerencia, esCaja } = useAuth()
   if (!usuario) return <Login />
   return (
     <OperacionProvider key={usuario.id}>
@@ -27,11 +28,16 @@ function Rutas() {
           <Route path="/pedido/nuevo" element={<NuevoPedido />} />
           <Route path="/pedido/:id" element={<PedidoDetalle />} />
           <Route path="/pedido/:id/agregar" element={<NuevoPedido />} />
-          {esGerencia && (
+          {esCaja && (
             <>
               <Route path="/caja" element={<Caja />} />
               <Route path="/caja/turno/:id" element={<CajaTurno />} />
+            </>
+          )}
+          {esGerencia && (
+            <>
               <Route path="/gestion" element={<Gestion />} />
+              <Route path="/impresoras" element={<Impresoras />} />
               <Route path="/ventas" element={<Ventas />} />
               <Route path="/carta" element={<CartaGestion />} />
               <Route path="/salon" element={<Salon />} />

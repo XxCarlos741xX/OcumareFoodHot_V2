@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { api } from '../api/client'
+import { useAuth } from '../auth/AuthContext'
 import { useOperacion } from '../auth/OperacionContext'
 import { useAviso } from '../components/Aviso'
+import { RevisionTurno } from '../components/Bitacora'
 import { ConteoCaja, TablaMeseros, TablaMetodos, Totales } from '../components/Corte'
 import Hoja from '../components/Hoja'
 import SinTurno from '../components/SinTurno'
@@ -19,11 +21,12 @@ const nombreTurno = (t) => `Turno de ${t.tipo === 'DIA' ? 'día' : 'noche'}`
 /** /caja: corte en vivo del turno abierto, botón para cerrarlo e historial. */
 export default function Caja() {
   const { turno } = useOperacion()
+  const { esGerencia } = useAuth()
   if (turno === undefined) return <div className="pagina"><p className="cargando">Cargando…</p></div>
   return (
     <div className="pagina">
       {turno ? <CorteTurno id={turno.id} vivo /> : <SinTurno />}
-      <Historial excluir={turno?.id} />
+      {esGerencia && <Historial excluir={turno?.id} />}
     </div>
   )
 }
@@ -43,6 +46,7 @@ export function CajaTurno() {
 }
 
 function CorteTurno({ id, vivo }) {
+  const { esGerencia } = useAuth()
   const { datos: corte, setDatos, error } = useCarga(`/api/turnos/${id}/corte`, vivo ? 30 : 0)
   const [cerrar, setCerrar] = useState(false)
 
@@ -63,7 +67,8 @@ function CorteTurno({ id, vivo }) {
       </p>
 
       <Totales t={corte.totales} />
-      <ConteoCaja c={corte.conteoCaja} turnoId={t.id} cerrado={cerrado} onActualizado={setDatos} />
+      <ConteoCaja c={corte.conteoCaja} turnoId={t.id} cerrado={cerrado} puedeCorregir={esGerencia} onActualizado={setDatos} />
+      <RevisionTurno turnoId={t.id} vivo={vivo && !cerrado} />
       <TablaMetodos filas={corte.porMetodo} />
       <TablaMeseros filas={corte.porMesero} />
       {corte.observaciones && <section className="bloque"><h2>Observaciones</h2><p>{corte.observaciones}</p></section>}

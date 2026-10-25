@@ -49,6 +49,14 @@ public class DetallePedido {
     @Column(length = 200)
     private String notas;
 
+    /**
+     * Ya salió en una comanda de cocina. Desde ese momento un mesero no puede quitarlo:
+     * solo el cajero o el gerente, y la cocina recibe una comanda de CANCELADO.
+     */
+    @Builder.Default
+    @Column(name = "enviado_cocina", nullable = false)
+    private boolean enviadoCocina = false;
+
     /** Crea la línea copiando nombre y precio actuales del producto. */
     public static DetallePedido de(Producto producto, int cantidad, String notas) {
         if (cantidad <= 0) {

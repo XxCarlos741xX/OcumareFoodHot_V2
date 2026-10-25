@@ -4,18 +4,20 @@ import { api, esDemo } from '../api/client'
 import { useAuth } from '../auth/AuthContext'
 import { useOperacion } from '../auth/OperacionContext'
 import { leerMonto, numero } from '../lib/dinero'
+import { ROLES } from '../lib/roles'
 import { useAviso } from './Aviso'
 import Hoja from './Hoja'
 import Marca from './Marca'
 
 /** Marco de la app: barra superior con turno y tasa, contenido y navegación inferior. */
 export default function Shell() {
-  const { usuario, esGerencia, salir } = useAuth()
+  const { usuario, esGerencia, esCaja, salir } = useAuth()
   const { turno, tasa } = useOperacion()
   const [editarTasa, setEditarTasa] = useState(false)
   const [cambiarClave, setCambiarClave] = useState(false)
   const ruta = useLocation().pathname
-  useAvisoPedidosWeb(!!turno)
+  useAvisoPedidosWeb(!!turno && esCaja)
+  const cocina = useEstadoCocina(esCaja)
 
   return (
     <div className="app">
@@ -33,22 +35,23 @@ export default function Shell() {
         <details className="usuario">
           <summary aria-label="Menú de usuario">{usuario.nombre.trim().charAt(0).toUpperCase()}</summary>
           <div className="usuario-menu">
-            <p>{usuario.nombre}<br /><small>{({ ADMIN: 'Administrador', GERENTE: 'Gerente', MESERO: 'Mesero' })[usuario.rol]}</small></p>
+            <p>{usuario.nombre}<br /><small>{ROLES[usuario.rol]}</small></p>
             <button type="button" className="btn btn-linea" onClick={() => setCambiarClave(true)}>Cambiar mi contraseña</button>
             <button type="button" className="btn btn-linea" onClick={salir}>Cerrar sesión</button>
           </div>
         </details>
       </header>
       {esDemo && <p className="demo-aviso">Modo demostración: los datos son de prueba y se borran al recargar.</p>}
+      {cocina && <p className="banda-cocina" role="status">{cocina}</p>}
 
       <main className="contenido"><Outlet /></main>
 
       <nav className="nav" aria-label="Secciones">
         <NavLink to="/mesas">Mesas</NavLink>
         <NavLink to="/pedidos">Pedidos</NavLink>
-        {esGerencia && <NavLink to="/caja">Caja</NavLink>}
+        {esCaja && <NavLink to="/caja">Caja</NavLink>}
         {esGerencia && (
-          <NavLink to="/gestion" className={({ isActive }) => (isActive || ['/ventas', '/carta', '/salon', '/personal'].includes(ruta) ? 'active' : '')}>
+          <NavLink to="/gestion" className={({ isActive }) => (isActive || ['/ventas', '/carta', '/salon', '/personal', '/impresoras'].includes(ruta) ? 'active' : '')}>
             Gestión
           </NavLink>
         )}
@@ -154,6 +157,38 @@ function HojaClave({ onCerrar }) {
       </form>
     </Hoja>
   )
+}
+
+/**
+ * Cada 30 s revisa la impresora de cocina. Devuelve un aviso si hay comandas que no salen
+ * o si la impresora dejó de conectarse; null si todo va bien (o si no hay impresora registrada).
+ */
+function useEstadoCocina(activo) {
+  const [aviso, setAviso] = useState(null)
+  useEffect(() => {
+    if (!activo || esDemo) return undefined
+    let vivo = true
+    const revisar = async () => {
+      try {
+        const e = await api('/api/comandas/estado')
+        if (!vivo) return
+        if (!e.impresorasActivas) { setAviso(null); return }
+        if (!e.conectada) {
+          setAviso(e.minutosSinConexion != null
+            ? `La impresora de cocina no se conecta desde hace ${e.minutosSinConexion} min. Revisa que esté prendida y con internet.`
+            : 'La impresora de cocina todavía no se ha conectado nunca. Revisa su configuración en Gestión > Impresoras.')
+        } else if (e.pendientes > 0 && e.minutosPendienteMasVieja >= 2) {
+          setAviso(`${e.pendientes} ${e.pendientes === 1 ? 'comanda no ha salido' : 'comandas no han salido'} en cocina. Revisa el papel de la impresora.`)
+        } else {
+          setAviso(null)
+        }
+      } catch { /* sin conexión: se reintenta */ }
+    }
+    revisar()
+    const id = setInterval(revisar, 30000)
+    return () => { vivo = false; clearInterval(id) }
+  }, [activo])
+  return aviso
 }
 
 /**

@@ -32,7 +32,7 @@ export default function Pedidos() {
             <Link to={`/pedido/${p.id}`} className={`pedido-fila estado-${p.estado.toLowerCase()}`}>
               <span className="pedido-num">#{p.numeroDiario}</span>
               <span className="pedido-que">
-                <strong>{p.tipo === 'MESA' ? `Mesa ${p.mesaNumero}` : TIPOS[p.tipo]}</strong>
+                <strong>{p.tipo === 'MESA' ? `Mesa ${p.mesaNumero}` : TIPOS[p.tipo]}{p.entrega && <span className={`etiqueta-entrega entrega-${p.entrega.toLowerCase()}`}>{p.entrega === 'DELIVERY' ? 'Delivery' : 'Retira'}</span>}{p.tipo === 'WEB' && p.estado === 'ABIERTO' && <span className="etiqueta-entrega por-aceptar">Por aceptar</span>}</strong>
                 <small>{p.clienteNombre ?? p.mesero ?? ''}</small>
               </span>
               <span className="pedido-estado">{ESTADOS[p.estado]}</span>

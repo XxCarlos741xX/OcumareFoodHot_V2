@@ -111,8 +111,10 @@ function pintarMenu(){
 
 /* ---------- Carrusel "Lo más pedido" ----------
    Celular: se desliza con el dedo. Computador: flechas, puntos o arrastrar con el mouse.
-   Avanza solo cada 4 s y se detiene en cuanto la persona lo toca. */
-const car = { listo: false, auto: null, pausado: false };
+   Avanza solo cada 4 s y se detiene en cuanto la persona lo toca.
+   Mientras se está moviendo solo, un toque en "+" no cuenta: el plato bajo el dedo podría
+   ser otro del que la persona vio, así que se detiene y se ignora ese toque. */
+const car = { listo: false, auto: null, pausado: false, moviendoHasta: 0 };
 
 function tarjetasCarrusel(){ return [...$('destacados').querySelectorAll('.top')]; }
 function pasoCarrusel(){ const t = tarjetasCarrusel(); return t.length > 1 ? t[1].offsetLeft - t[0].offsetLeft : $('destacados').clientWidth; }
@@ -141,6 +143,7 @@ function iniciarAuto(){
   if (car.pausado || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   car.auto = setInterval(() => {
     const c = $('destacados');
+    car.moviendoHasta = Date.now() + 900;
     if (c.scrollLeft >= c.scrollWidth - c.clientWidth - 4) irACarrusel(0); else irACarrusel(indiceCarrusel() + 1);
   }, 4000);
 }
@@ -154,6 +157,8 @@ function prepararCarrusel(){
     $('puntos').addEventListener('click', e => { const b = e.target.closest('[data-punto]'); if (b) { pararAuto(); irACarrusel(Number(b.dataset.punto)); } });
     c.addEventListener('scroll', () => requestAnimationFrame(actualizarCarrusel), { passive: true });
     c.addEventListener('touchstart', pararAuto, { passive: true });
+    c.addEventListener('pointerdown', e => { if (e.pointerType !== 'mouse') pararAuto(); });
+    c.addEventListener('focusin', pararAuto);
     c.addEventListener('mouseenter', () => clearInterval(car.auto));
     c.addEventListener('mouseleave', iniciarAuto);
     window.addEventListener('resize', actualizarCarrusel);
@@ -177,6 +182,12 @@ function prepararCarrusel(){
     });
     // Si fue un arrastre, que no cuente como toque en el botón "+"
     c.addEventListener('click', e => { if (movio) { e.stopPropagation(); e.preventDefault(); movio = false; } }, true);
+    // Toque en "+" o "−" justo mientras el carrusel avanzaba solo: se detiene y no se agrega nada
+    c.addEventListener('click', e => {
+      if (e.target.closest('[data-d]') && Date.now() < car.moviendoHasta) {
+        e.stopPropagation(); e.preventDefault(); pararAuto();
+      }
+    }, true);
     iniciarAuto();
   }
   requestAnimationFrame(actualizarCarrusel);

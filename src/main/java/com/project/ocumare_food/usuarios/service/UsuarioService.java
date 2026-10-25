@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Alta y consulta de personal. Reglas:
  *  - No hay registro público: solo ADMIN y GERENTE crean usuarios.
- *  - Un GERENTE solo puede crear MESEROS.
+ *  - Un GERENTE solo puede crear y manejar MESEROS y CAJEROS.
  *  - Un ADMIN puede crear cualquier rol.
  */
 @Service
@@ -34,8 +34,8 @@ public class UsuarioService {
 
     @Transactional
     public UsuarioResponse crear(CrearUsuarioRequest req, UsuarioActual actor) {
-        if (!actor.esAdmin() && req.rol() != Rol.MESERO) {
-            throw ErrorNegocio.prohibido("Un gerente solo puede crear meseros");
+        if (!actor.esAdmin() && !aCargoDelGerente(req.rol())) {
+            throw ErrorNegocio.prohibido("Un gerente solo puede crear meseros y cajeros");
         }
         String username = req.username().trim().toLowerCase();
         if (usuarios.existsByUsername(username)) {
@@ -51,15 +51,17 @@ public class UsuarioService {
     }
 
     /**
-     * Editar nombre, rol o activo. Un gerente solo puede tocar meseros y no puede ascenderlos.
+     * Editar nombre, rol o activo. Un gerente solo puede tocar meseros y cajeros, y solo moverlos entre esos dos roles.
      * Nadie puede desactivarse ni quitarse el rol a sí mismo (para no quedarse sin acceso).
      */
     @Transactional
     public UsuarioResponse editar(Long id, EditarUsuarioRequest req, UsuarioActual actor) {
         Usuario u = usuarios.findById(id).orElseThrow(() -> ErrorNegocio.noEncontrado("Usuario no encontrado"));
         if (!actor.esAdmin()) {
-            if (u.getRol() != Rol.MESERO) throw ErrorNegocio.prohibido("Un gerente solo puede modificar meseros");
-            if (req.rol() != null && req.rol() != Rol.MESERO) throw ErrorNegocio.prohibido("Un gerente no puede cambiar el rol");
+            if (!aCargoDelGerente(u.getRol())) throw ErrorNegocio.prohibido("Un gerente solo puede modificar meseros y cajeros");
+            if (req.rol() != null && !aCargoDelGerente(req.rol())) {
+                throw ErrorNegocio.prohibido("Un gerente solo puede asignar el rol de mesero o cajero");
+            }
         }
         boolean esSiMismo = u.getId().equals(actor.id());
         if (esSiMismo && req.activo() != null && !req.activo()) {
@@ -81,8 +83,8 @@ public class UsuarioService {
     @Transactional
     public void restablecerPassword(Long id, PasswordRequest req, UsuarioActual actor) {
         Usuario u = usuarios.findById(id).orElseThrow(() -> ErrorNegocio.noEncontrado("Usuario no encontrado"));
-        if (!actor.esAdmin() && u.getRol() != Rol.MESERO) {
-            throw ErrorNegocio.prohibido("Un gerente solo puede cambiar la clave de meseros");
+        if (!actor.esAdmin() && !aCargoDelGerente(u.getRol())) {
+            throw ErrorNegocio.prohibido("Un gerente solo puede cambiar la clave de meseros y cajeros");
         }
         u.setPasswordHash(encoder.encode(req.passwordNueva()));
         u.cerrarSesiones();
@@ -101,6 +103,11 @@ public class UsuarioService {
         u.setPasswordHash(encoder.encode(req.passwordNueva()));
         u.cerrarSesiones();
         return usuarios.saveAndFlush(u);
+    }
+
+    /** Roles que un gerente puede crear, editar y restablecer. */
+    private static boolean aCargoDelGerente(Rol rol) {
+        return rol == Rol.MESERO || rol == Rol.CAJERO;
     }
 
     @Transactional(readOnly = true)

@@ -326,23 +326,51 @@ Si no carga, mira la sección 13.
 En `https://TU_DOMINIO/pos/` entra con el `ADMIN_USERNAME` y el `ADMIN_PASSWORD` del paso 7.3, y
 haz esto una sola vez:
 
-1. **Gestión → Personal**: crea un usuario **Gerente** para cada encargado. Los meseros puede
-   crearlos el administrador o cualquier gerente. Cada persona puede cambiar luego su propia
-   contraseña desde el menú.
+1. **Gestión → Personal**: crea un usuario **Gerente** para cada encargado. Los meseros y los
+   **cajeros** puede crearlos el administrador o cualquier gerente. El cajero cobra, acepta los
+   pedidos web, abre y cierra el turno y ve la bitácora; el mesero solo toma pedidos. Cada persona
+   puede cambiar luego su propia contraseña desde el menú.
    - Crea también un **segundo administrador** de respaldo, por ejemplo para el dueño. Solo un
      administrador puede cambiar la clave de otro administrador o de un gerente.
 2. **Gestión → Salón**: crea las mesas. Puedes ponerles nombre, zona y capacidad, y ordenarlas
    arrastrándolas.
 3. **Gestión → Carta**: revisa precios y disponibilidad. Para la foto de un plato nuevo pulsa
    **Subir foto**; desde el celular puedes tomarla con la cámara. El sistema la achica sola.
-4. **Caja → Abrir turno**: registra el fondo inicial.
-5. **Tasa del día**: no hay que hacer nada. El servidor consulta la tasa oficial del **BCV** cada
+4. **Gestión → Impresoras**: registra la impresora de cocina (ver la sección siguiente).
+5. **Caja → Abrir turno**: registra el fondo inicial. Lo puede hacer el cajero.
+6. **Tasa del día**: no hay que hacer nada. El servidor consulta la tasa oficial del **BCV** cada
    hora y la registra sola cuando el BCV publica una nueva. Si hace falta otra, por ejemplo la del
    paralelo, el gerente toca la tasa en la barra superior y la pone a mano. La manual se respeta
    hasta que el BCV publique la siguiente.
 
 Mientras no haya un turno abierto, la web de clientes avisa que el restaurante no está recibiendo
 pedidos.
+
+### Impresora de cocina
+
+Cada vez que un pedido se envía a cocina sale una comanda, venga del mesero, de la caja o de la web
+(los pedidos web salen cuando el cajero los acepta). La impresora busca las comandas sola en el
+servidor, así que el celular o la tablet que tomó el pedido no necesita verla. Hay dos formas:
+
+**A. Impresora con nube (Star con CloudPRNT).** No necesita nada más en el local.
+1. En **Gestión → Impresoras → Agregar impresora** se crea y se muestran dos direcciones. Copia la
+   de **CloudPRNT** (solo se muestra esa vez).
+2. Conecta la impresora al WiFi o al cable del local y abre su página de configuración (su IP sale en
+   la hoja de autoprueba). Activa **CloudPRNT**, pega la dirección como **Server URL** y pon el
+   intervalo de consulta en 5 segundos.
+3. En la pantalla de Impresoras debe salir **En línea**. Toca **Imprimir hoja de prueba**.
+
+**B. Impresora térmica de red común (ESC/POS, puerto 9100).** Necesita un "puente": un PC del local
+con Java 21 que quede prendido (sirve el mismo de la caja).
+1. Crea la impresora en **Gestión → Impresoras** y copia la dirección del **puente**.
+2. Copia la carpeta `deploy/puente-impresora` a ese PC. Abre `puente-impresora.bat` con el Bloc de
+   notas, pega la dirección en `SERVIDOR` y la IP de la impresora en `IMPRESORA`. Guarda.
+3. Dale doble clic a `puente-impresora.bat` y deja la ventana abierta (o ponlo en Inicio de Windows).
+4. En la pantalla de Impresoras debe salir **En línea** (vía puente). Prueba con la hoja de prueba.
+
+Si la impresora se desconecta o se queda sin papel, el POS de la caja muestra un aviso arriba, y en
+cada pedido se ve si su comanda ya se imprimió. Desde el pedido se puede **Reimprimir en cocina**: la
+copia sale marcada para que no se prepare dos veces.
 
 ---
 
