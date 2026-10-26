@@ -7,8 +7,7 @@ import java.util.List;
 /**
  * Evento que publica pedidos cuando la cocina tiene que enterarse de algo: un pedido que entra a cocina,
  * platos que se agregan o se quitan después, una anulación o una reimpresión.
- * Lo escucha el módulo cocina, que arma la comanda y la deja en la cola de impresión, y el módulo inventario,
- * que descuenta los insumos al entrar a cocina (NUEVA, ADICIONAL) y los devuelve si se cancela (CANCELADO, ANULADO).
+ * Lo escucha el módulo cocina, que arma la comanda y la deja en la cola de impresión.
  * Se publica dentro de la misma transacción: si el cambio del pedido falla, no queda comanda suelta.
  *
  * @param entrega      "DELIVERY" o "RETIRO" para pedidos web y delivery; null en mesa y para llevar.
@@ -32,7 +31,6 @@ public record ComandaSolicitada(Long pedidoId, Integer numeroPedido, TipoComanda
         REIMPRESION
     }
 
-    /** productoId: para que inventario descuente (o devuelva) los insumos de la receta. */
-    public record Linea(int cantidad, String nombre, String notas, Long productoId) {
+    public record Linea(int cantidad, String nombre, String notas) {
     }
 }

@@ -6,13 +6,13 @@
 const LEGAL = {
   // Cambia VERSION y FECHA cada vez que cambies el texto de las políticas.
   // Cada pedido web guarda la versión que el cliente aceptó.
-  VERSION: '2026-10-25b',
+  VERSION: '2026-10-25c',
   FECHA: '25 de octubre de 2026',
 
-  RAZON_SOCIAL: '',                 // nombre legal del negocio o de Néstor como persona natural
-  RIF: '',                          // J-12345678-9 o V-12345678-9
+  RAZON_SOCIAL: 'DISTRIBUIDORA LIENDO 2424, OCUMAREFOODHOT, C.A.',
+  RIF: 'J-41238529-1',
   DIRECCION: 'Coliseo, El Limón, diagonal a la pasarela, Maracay, estado Aragua, Venezuela',
-  CORREO: '',                       // correo para reclamos y solicitudes de datos
+  CORREO: 'ocumarefoodhot.ve@gmail.com',   // reclamos y solicitudes de datos personales
   WHATSAPP: '+58 424 315 7134',
   ENCARGADO: 'Carlos Coronel (Medellín, Colombia)',
   HOSTING: '',                      // proveedor del servidor, p. ej. OVHcloud

@@ -174,12 +174,6 @@ public class CatalogoService {
         return c;
     }
 
-    /** Para otros módulos (inventario): los productos activos de la carta, por categoría y nombre. */
-    @Transactional(readOnly = true)
-    public List<Producto> productosActivos() {
-        return productos.findByActivoTrueOrderByCategoriaOrdenAscNombreAsc();
-    }
-
     /** Para otros módulos (pedidos): los productos con esos ids (los que no existan no vienen). */
     @Transactional(readOnly = true)
     public List<Producto> productosPorId(Collection<Long> ids) {

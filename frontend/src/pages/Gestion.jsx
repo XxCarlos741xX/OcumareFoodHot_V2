@@ -4,7 +4,6 @@ import { useAuth } from '../auth/AuthContext'
 const SECCIONES = [
   { a: '/ventas', titulo: 'Ventas', texto: 'Lo que entró hoy y en los últimos días, en dólares y bolívares.' },
   { a: '/carta', titulo: 'Carta', texto: 'Productos, precios, agotados y categorías.' },
-  { a: '/inventario', titulo: 'Inventario', texto: 'Insumos, recetas de cada plato, compras, mermas y lo que falta por comprar.' },
   { a: '/salon', titulo: 'Salón', texto: 'Mesas: agregar, retirar, ordenar y renumerar.' },
   { a: '/personal', titulo: 'Personal', texto: 'Quién puede entrar al sistema y con qué rol.' },
   { a: '/impresoras', titulo: 'Impresoras', texto: 'La impresora de cocina: conectarla, probarla y ver si está en línea.' },

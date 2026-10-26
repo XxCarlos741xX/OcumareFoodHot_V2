@@ -16,10 +16,9 @@ Todos viven en `src/main/java/com/project/ocumare_food/`.
 | `catalogo` | Categorías, productos, fotos, menú público y carrusel | `CatalogoService`, `VentasRecientes`, `model` (Producto…) |
 | `salon` | Mesas: zonas, orden, renumerar | `MesaService`, `OcupacionMesas`, `model` (Mesa) |
 | `turnos` | Abrir turno, turno actual | `TurnoService`, `model` (Turno…), `dto` (TurnoResponse) |
-| `pedidos` | Pedidos del POS y de la web, pagos | `ConsultasPedidos`, `ResumenVentas`, `PedidoWebRecibido`, `ComandaSolicitada`, `model` |
+| `pedidos` | Pedidos del POS y de la web, pagos | `ConsultasPedidos`, `ResumenVentas`, `PedidoWebRecibido`, `model` |
 | `caja` | Cierre de turno, conteo de caja, dashboard | (nadie lo usa) |
 | `cocina` | Comandas de cocina, impresoras, rutas para CloudPRNT y el puente | (nadie lo usa) |
-| `inventario` | Insumos, recetas por plato, compras, mermas, conteos y agotado automático | (nadie lo usa) |
 | `notificaciones` | Aviso a Telegram de pedidos web | (nadie lo usa) |
 
 **La API pública de un módulo** es lo que está en su paquete raíz (por ejemplo `pedidos/ConsultasPedidos.java`)
@@ -34,8 +33,6 @@ flowchart TD
     caja --> turnos
     notificaciones -. escucha PedidoWebRecibido .-> pedidos
     cocina -. escucha ComandaSolicitada .-> pedidos
-    inventario -. escucha ComandaSolicitada .-> pedidos
-    inventario --> catalogo
     pedidos --> catalogo
     pedidos --> salon
     pedidos --> turnos
@@ -58,11 +55,6 @@ Todos usan `compartido` y `usuarios` (`UsuarioActual`). Casos especiales:
 - **cocina reacciona a un evento.** Pedidos publica `ComandaSolicitada` cuando un pedido entra a cocina,
   se le agregan o quitan platos, se anula o se reimprime. Cocina guarda la comanda en la misma
   transacción y la impresora la viene a buscar. Pedidos no sabe que hay impresoras.
-- **inventario reacciona al mismo evento.** Con `NUEVA` y `ADICIONAL` descuenta los insumos de la receta de cada
-  plato; con `CANCELADO` y `ANULADO` los devuelve; la reimpresión no toca nada. El stock se suma o resta con
-  un `UPDATE` atómico (dos pedidos a la vez no se pisan) y nunca frena una venta: si queda negativo, avisa.
-  Si a un plato ya no le alcanza un insumo, inventario lo marca agotado con `CatalogoService` y lo vuelve a
-  prender cuando entra la compra (solo los que agotó él).
 - **El carrusel de la web lo arma catalogo** con los platos impulsados por el gerente y, después, los más
   vendidos de 30 días. Catalogo no conoce los pedidos: define `VentasRecientes` y pedidos la implementa
   (`MasVendidos`), igual que `OcupacionMesas`. El resultado se guarda 5 minutos.
@@ -94,6 +86,9 @@ Todos usan `compartido` y `usuarios` (`UsuarioActual`). Casos especiales:
 
 ## Siguiente paso: la plantilla (proyecto aparte)
 
+> El módulo de **inventario** (insumos, recetas, descuento al enviar a cocina, agotado automático) ya está
+> hecho y probado en la rama `modulo-inventario`. No va en Ocumare Food Hot; queda para la plantilla.
+
 OFH conserva su marca y sus módulos básicos. La plantilla (`pos-restaurante-base`) se copia de este
 punto y ahí se hacen las fases que faltan:
 
@@ -107,7 +102,7 @@ Módulos que se podrían agregar a la plantilla para un software más especializ
 | Módulo | Para qué | Se conecta con |
 |---|---|---|
 | `cocina` (KDS) | Pantalla de cocina con los pedidos en preparación | escucha eventos de pedidos |
-| `inventario` | Insumos, recetas por producto, descuento automático, alertas de stock bajo | escucha `PedidoPagado` |
+| `inventario` | Insumos, recetas por producto, descuento automático, alertas de stock bajo (**hecho**, rama `modulo-inventario`) | escucha `ComandaSolicitada` |
 | `compras` | Proveedores, órdenes de compra, costo de insumos | inventario |
 | `clientes` | Historial y datos de clientes frecuentes, fidelización por puntos | pedidos (teléfono) |
 | `delivery` | Repartidores, zonas y tarifas, estado del envío | pedidos tipo DELIVERY/WEB |

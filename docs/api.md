@@ -72,20 +72,6 @@ Rutas que usa la impresora (sin sesión, con el token de la impresora en la dire
 Las comandas de más de 2 horas que no salieron no se imprimen (para que no salga todo lo viejo al
 conectar una impresora). El texto va sin tildes para que cualquier térmica lo imprima bien.
 
-## Inventario
-
-| Método | Ruta | Quién | Uso |
-|---|---|---|---|
-| GET | /inventario/insumos | Cajero, Gerente, Admin | Insumos con stock, mínimo, costo, `bajo` y en cuántos platos se usa |
-| POST/PUT | /inventario/insumos[/{id}] | Gerente, Admin | `{nombre, unidad: UNIDAD\|KG\|LITRO, stockMinimo, costoUnitarioUsd, stockInicial (solo al crear), activo}` |
-| GET | /inventario/movimientos?insumoId=&limite=&pedidoId= | Cajero, Gerente, Admin | Historial (kárdex), lo más nuevo primero (máx. 200) |
-| POST | /inventario/movimientos | Cajero (ENTRADA, MERMA), Gerente (también AJUSTE) | `{insumoId, tipo, cantidad, costoUnitarioUsd?, nota}`. AJUSTE: `cantidad` = lo contado. MERMA exige nota |
-| GET | /inventario/recetas[/{productoId}] | Cajero, Gerente, Admin | Receta de cada plato con costo, % del precio, `alcanzaPara` y si está agotado por inventario |
-| PUT | /inventario/recetas/{productoId} | Gerente, Admin | `{lineas:[{insumoId, cantidad}]}` (cantidad por UN plato; lista vacía = sin receta) |
-| GET | /inventario/alertas | Cajero, Gerente, Admin | `{bajoMinimo, platosAgotados}` |
-
-Las ventas (`VENTA`) y devoluciones (`DEVOLUCION`) las registra el sistema al enviar, cancelar o anular en cocina.
-
 ## Gerencia (Gerente, Admin)
 | Método | Ruta | Uso |
 |---|---|---|

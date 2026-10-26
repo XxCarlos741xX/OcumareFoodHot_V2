@@ -15,7 +15,6 @@ import Gestion from './pages/Gestion'
 import Personal from './pages/Personal'
 import Ventas from './pages/Ventas'
 import Impresoras from './pages/Impresoras'
-import Inventario from './pages/Inventario'
 
 function Rutas() {
   const { usuario, esGerencia, esCaja } = useAuth()
@@ -33,7 +32,6 @@ function Rutas() {
             <>
               <Route path="/caja" element={<Caja />} />
               <Route path="/caja/turno/:id" element={<CajaTurno />} />
-              <Route path="/inventario" element={<Inventario />} />
             </>
           )}
           {esGerencia && (

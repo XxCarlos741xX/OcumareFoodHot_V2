@@ -50,9 +50,8 @@ export default function Shell() {
         <NavLink to="/mesas">Mesas</NavLink>
         <NavLink to="/pedidos">Pedidos</NavLink>
         {esCaja && <NavLink to="/caja">Caja</NavLink>}
-        {esCaja && !esGerencia && <NavLink to="/inventario">Inventario</NavLink>}
         {esGerencia && (
-          <NavLink to="/gestion" className={({ isActive }) => (isActive || ['/ventas', '/carta', '/salon', '/personal', '/impresoras', '/inventario'].includes(ruta) ? 'active' : '')}>
+          <NavLink to="/gestion" className={({ isActive }) => (isActive || ['/ventas', '/carta', '/salon', '/personal', '/impresoras'].includes(ruta) ? 'active' : '')}>
             Gestión
           </NavLink>
         )}
