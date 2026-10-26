@@ -46,7 +46,10 @@ public class Producto {
     @Column(nullable = false)
     private boolean disponible = true;
 
-    /** Aparece en "Lo más pedido" de la web de clientes. */
+    /**
+     * Impulsado por el gerente: sale primero en el carrusel "Lo más pedido" de la web, venda o no.
+     * El resto del carrusel se llena solo con los más vendidos (ver CatalogoService.menuPublico).
+     */
     @Builder.Default
     @Column(nullable = false)
     private boolean destacado = false;

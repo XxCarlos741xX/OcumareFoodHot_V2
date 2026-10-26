@@ -12,6 +12,9 @@ export default function CartaGestion() {
   const aviso = useAviso()
   const { datos: productos, recargar: recargarProductos } = useCarga('/api/productos?incluirInactivos=true')
   const { datos: categorias, recargar: recargarCategorias } = useCarga('/api/categorias')
+  // El carrusel de la web: lo que impulsa el gerente y lo que más se vende (lo arma el servidor).
+  const { datos: menu } = useCarga('/api/menu')
+  const motivos = useMemo(() => new Map((menu?.carrusel ?? []).map((c) => [c.id, c.motivo])), [menu])
   const [editar, setEditar] = useState(null)          // producto, o {} para uno nuevo
   const [verCategorias, setVerCategorias] = useState(false)
 
@@ -48,6 +51,10 @@ export default function CartaGestion() {
         <button type="button" className="btn btn-oro" onClick={() => setEditar({})} disabled={!categorias?.length}>Agregar producto</button>
         <button type="button" className="btn btn-linea" onClick={() => setVerCategorias(true)}>Categorías</button>
       </div>
+      <p className="nota">
+        <strong>Lo más pedido</strong> (carrusel de la web): primero salen los platos que impulses, y el resto se llena solo con
+        los más vendidos de los últimos 30 días. Impulsa los que quieras mover más desde "Editar".
+      </p>
       {categorias && categorias.length === 0 && <p className="vacio-texto">Crea primero una categoría (Hamburguesas, Bebidas…).</p>}
 
       {grupos.map(([c, lista]) => (
@@ -60,7 +67,7 @@ export default function CartaGestion() {
                 {p.imagenUrl ? <img className="gestion-mini" src={urlImagen(p.imagenUrl)} alt="" loading="lazy" /> : <span className="gestion-mini" aria-hidden="true" />}
                 <span className="gestion-info">
                   <strong>{p.nombre}</strong>
-                  <small>{[usd(p.precioUsd), !p.disponible && 'agotado', p.destacado && 'destacado en la web'].filter(Boolean).join(', ')}</small>
+                  <small>{[usd(p.precioUsd), !p.disponible && 'agotado', p.destacado && 'impulsado en la web', !p.destacado && motivos.get(p.id) === 'MAS_VENDIDO' && 'en la web por lo más vendido'].filter(Boolean).join(', ')}</small>
                 </span>
                 <button type="button" className="btn btn-texto" onClick={() => setEditar(p)}>Editar</button>
                 <label className="interruptor" title={p.disponible ? 'Disponible' : 'Agotado'}>
@@ -157,7 +164,7 @@ function HojaProducto({ producto, categorias, onCerrar, onListo }) {
                    onSubiendo={setSubiendoFoto} />
         <label className="casilla">
           <input type="checkbox" checked={f.destacado} onChange={(e) => setF({ ...f, destacado: e.target.checked })} />
-          Mostrar en "Lo más pedido" de la web
+          Impulsar en la web: sale primero en "Lo más pedido" aunque no se venda tanto
         </label>
         {!nuevo && <p className="nota">Cambiar el precio solo afecta los pedidos nuevos.</p>}
         <button className="btn btn-oro btn-grande" disabled={!f.nombre.trim() || !(precio > 0) || enviando || subiendoFoto}>

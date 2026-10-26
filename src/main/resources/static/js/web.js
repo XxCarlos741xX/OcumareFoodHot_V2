@@ -33,6 +33,7 @@ function guardarCarrito(){ try { localStorage.setItem('carrito-ocumare', JSON.st
 
 const API = CONFIG.API_URL.replace(/\/$/, '') + '/api';
 let TASA = null;   // Bs por dólar, si el local la cargó
+let CARRUSEL = []; // [{ id, motivo }] en orden: primero lo que impulsa el local, luego lo más vendido
 
 // La carta viene del sistema del local: lo que el gerente cambia (precios, agotados, destacados) se ve aquí.
 async function cargarMenu(){
@@ -45,12 +46,20 @@ async function cargarMenu(){
     MENU = datos.categorias.flatMap(c => c.productos.map(p => ({
       id: String(p.id), categoria: c.nombre, nombre: p.nombre, descripcion: p.descripcion || '',
       precio: Number(p.precioUsd), precioBs: p.precioBs, imagen: p.imagenUrl || '',
-      destacado: p.destacado, disponible: p.disponible,
+      destacado: p.destacado, motivo: p.motivoCarrusel || null, disponible: p.disponible,
     })));
+    CARRUSEL = Array.isArray(datos.carrusel) ? datos.carrusel : MENU.filter(p => p.destacado).map(p => ({ id: p.id, motivo: 'IMPULSADO' }));
     pintarMenu();
   } catch (e) {
     $('menu').innerHTML = '<p class="error" style="margin-top:24px">No pudimos cargar el menú. Revisa tu conexión o pide directo por <a href="https://wa.me/' + CONFIG.WHATSAPP + '">WhatsApp</a>.</p>';
   }
+}
+
+// Etiqueta de la foto: lo que el local recomienda o lo que más se vende.
+function etiqueta(p){
+  if (p.motivo === 'IMPULSADO') return '<span class="badge badge-recomendado">⭐ Recomendado</span>';
+  if (p.motivo === 'MAS_VENDIDO') return '<span class="badge">🔥 Top</span>';
+  return '';
 }
 
 function foto(p, clase){
@@ -71,10 +80,10 @@ function sinFoto(img){
 function pintarMenu(){
   Object.keys(carrito).forEach(id => { const p = MENU.find(x => String(x.id) === id); if (!p || !p.disponible) delete carrito[id]; });
 
-  const top = MENU.filter(p => p.destacado);
+  const top = CARRUSEL.map(c => MENU.find(p => p.id === String(c.id))).filter(Boolean);
   $('destacados').innerHTML = top.map(p => `
     <article class="top">
-      ${foto(p)}
+      ${foto(p)}${etiqueta(p)}
       <div class="info">
         <div><h3>${esc(p.nombre)}</h3><span class="precio">${dinero(p.precio)}</span>${p.precioBs != null ? `<span class="precio-bs">${bolivares(p.precioBs)}</span>` : ''}</div>
         <div class="contador" data-ctr="${esc(p.id)}"></div>
@@ -91,7 +100,7 @@ function pintarMenu(){
       <div class="grilla">
         ${MENU.filter(p => (p.categoria || 'Otros') === c).map(p => `
           <article class="producto${p.disponible ? '' : ' agotado'}" data-prod="${esc(p.id)}">
-            <div class="foto">${foto(p)}${p.destacado ? '<span class="badge">🔥 Top</span>' : ''}</div>
+            <div class="foto">${foto(p)}${etiqueta(p)}</div>
             <div class="info">
               <h3>${esc(p.nombre)}</h3>
               <p>${esc(p.descripcion)}</p>

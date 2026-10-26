@@ -495,6 +495,14 @@ function responder(ruta, metodo, b, token) {
   }
   // La demo no tiene impresora ni bitácora: responde vacío para que las pantallas se vean.
   if (camino === '/api/comandas/estado') return { impresorasActivas: 0, ultimaConexion: null, conectada: false, minutosSinConexion: null, pendientes: 0, pendienteMasVieja: null, minutosPendienteMasVieja: null }
+  if (camino === '/api/menu') return { tasaBsPorUsd: db.tasa?.bsPorUsd ?? null, categorias: [],
+    carrusel: db.productos.filter((p) => p.activo && p.destacado).map((p) => ({ id: p.id, motivo: 'IMPULSADO' })) }
+  // Inventario en la demo: vacío (las pantallas se ven, pero no guarda nada).
+  if (camino === '/api/inventario/alertas') return { bajoMinimo: [], platosAgotados: [] }
+  if (camino === '/api/inventario/recetas' && metodo === 'GET')
+    return db.productos.filter((p) => p.activo).map((p) => ({ productoId: p.id, producto: p.nombre, precioUsd: p.precioUsd, lineas: [], costoUsd: null, alcanzaPara: null, agotadoPorInventario: false }))
+  if (camino.startsWith('/api/inventario/') && metodo === 'GET') return []
+  if (camino.startsWith('/api/inventario/')) throw new Falla(409, 'La demo no guarda inventario')
   if (camino === '/api/comandas' || camino === '/api/pedidos/bitacora' || (camino === '/api/impresoras' && metodo === 'GET')) return []
   throw new Falla(404, `Ruta de demo no implementada: ${metodo} ${camino}`)
 }

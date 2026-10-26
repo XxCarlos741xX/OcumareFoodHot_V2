@@ -13,6 +13,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -20,18 +23,34 @@ import java.util.*;
  * Pedidos usa {@link #productosPorId(Collection)}; la web usa {@link #menuPublico()}.
  * "Eliminar" es siempre una baja lógica: lo vendido antes sigue apareciendo en los reportes.
  * Los cambios de precio solo afectan pedidos nuevos (cada línea de pedido guarda su precio).
+ *
+ * Carrusel "Lo más pedido" de la web (mixto): primero los platos que el gerente impulsa (destacado),
+ * y el resto se llena solo con los más vendidos de los últimos {@link #VENTANA_VENTAS}, hasta {@link #MAX_CARRUSEL}.
+ * Los más vendidos se recalculan cada {@link #REFRESCO_CARRUSEL} (la web pide el menú muy seguido).
  */
 @Service
 public class CatalogoService {
 
+    static final int MAX_CARRUSEL = 8;
+    static final Duration VENTANA_VENTAS = Duration.ofDays(30);
+    static final Duration REFRESCO_CARRUSEL = Duration.ofMinutes(5);
+
     private final CategoriaRepository categorias;
     private final ProductoRepository productos;
     private final TasaService tasas;
+    private final VentasRecientes ventas;
+    private final Clock reloj;
 
-    public CatalogoService(CategoriaRepository categorias, ProductoRepository productos, TasaService tasas) {
+    private volatile List<Long> masVendidos = List.of();
+    private volatile LocalDateTime masVendidosEn;
+
+    public CatalogoService(CategoriaRepository categorias, ProductoRepository productos, TasaService tasas,
+                           VentasRecientes ventas, Clock reloj) {
         this.categorias = categorias;
         this.productos = productos;
         this.tasas = tasas;
+        this.ventas = ventas;
+        this.reloj = reloj;
     }
 
     private static String limpio(String s) {
@@ -155,6 +174,12 @@ public class CatalogoService {
         return c;
     }
 
+    /** Para otros módulos (inventario): los productos activos de la carta, por categoría y nombre. */
+    @Transactional(readOnly = true)
+    public List<Producto> productosActivos() {
+        return productos.findByActivoTrueOrderByCategoriaOrdenAscNombreAsc();
+    }
+
     /** Para otros módulos (pedidos): los productos con esos ids (los que no existan no vienen). */
     @Transactional(readOnly = true)
     public List<Producto> productosPorId(Collection<Long> ids) {
@@ -166,15 +191,49 @@ public class CatalogoService {
     @Transactional(readOnly = true)
     public MenuResponse menuPublico() {
         BigDecimal tasa = tasas.tasaVigente().orElse(null);
+        List<Producto> lista = productos.findByActivoTrueAndCategoriaActivaTrueOrderByCategoriaOrdenAscNombreAsc();
+
+        // Carrusel: impulsados (por nombre) y luego los más vendidos que estén disponibles.
+        Map<Long, String> carrusel = new LinkedHashMap<>();
+        lista.stream().filter(Producto::isDestacado)
+                .sorted(Comparator.comparing(Producto::getNombre, String.CASE_INSENSITIVE_ORDER))
+                .limit(MAX_CARRUSEL).forEach(p -> carrusel.put(p.getId(), "IMPULSADO"));
+        Map<Long, Producto> porId = new HashMap<>();
+        lista.forEach(p -> porId.put(p.getId(), p));
+        for (Long id : masVendidos()) {
+            if (carrusel.size() >= MAX_CARRUSEL) break;
+            Producto p = porId.get(id);
+            if (p != null && p.isDisponible()) carrusel.putIfAbsent(id, "MAS_VENDIDO");
+        }
+
         Map<Long, MenuCategoria> porCategoria = new LinkedHashMap<>();
-        for (Producto p : productos.findByActivoTrueAndCategoriaActivaTrueOrderByCategoriaOrdenAscNombreAsc()) {
+        for (Producto p : lista) {
             Categoria c = p.getCategoria();
+            String motivo = carrusel.get(p.getId());
             porCategoria.computeIfAbsent(c.getId(), k -> new MenuCategoria(c.getId(), c.getNombre(), new ArrayList<>()))
                     .productos()
                     .add(new MenuProducto(p.getId(), p.getNombre(), p.getDescripcion(), p.getPrecioUsd(),
                             tasa == null ? null : Dinero.usdABs(p.getPrecioUsd(), tasa),
-                            p.getImagenUrl(), p.isDisponible(), p.isDestacado()));
+                            p.getImagenUrl(), p.isDisponible(), motivo != null, motivo));
         }
-        return new MenuResponse(tasa, List.copyOf(porCategoria.values()));
+        List<CarruselItem> items = carrusel.entrySet().stream().map(e -> new CarruselItem(e.getKey(), e.getValue())).toList();
+        return new MenuResponse(tasa, List.copyOf(porCategoria.values()), items);
+    }
+
+    /** Más vendidos de los últimos días, guardados unos minutos para no consultar los pedidos en cada visita. */
+    private List<Long> masVendidos() {
+        LocalDateTime ahora = LocalDateTime.now(reloj);
+        LocalDateTime calculado = masVendidosEn;
+        if (calculado == null || calculado.isBefore(ahora.minus(REFRESCO_CARRUSEL))) {
+            // Se piden de más porque algunos pueden estar agotados, inactivos o ya impulsados.
+            masVendidos = List.copyOf(ventas.masVendidos(ahora.minus(VENTANA_VENTAS), MAX_CARRUSEL * 3));
+            masVendidosEn = ahora;
+        }
+        return masVendidos;
+    }
+
+    /** Fuerza a recalcular los más vendidos en la próxima visita (lo usan las pruebas). */
+    public void recalcularCarrusel() {
+        masVendidosEn = null;
     }
 }

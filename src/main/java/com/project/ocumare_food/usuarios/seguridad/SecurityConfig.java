@@ -140,6 +140,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/turnos/abrir", "/api/turnos/cerrar")
                         .hasAnyRole("CAJERO", "GERENTE", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/turnos/*/corte").hasAnyRole("CAJERO", "GERENTE", "ADMIN")
+                // Inventario: el cajero ve y registra compras y mermas; insumos, recetas y conteos son de gerencia
+                .requestMatchers(HttpMethod.GET, "/api/inventario/**").hasAnyRole("CAJERO", "GERENTE", "ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/inventario/movimientos").hasAnyRole("CAJERO", "GERENTE", "ADMIN")
+                .requestMatchers("/api/inventario/**").hasAnyRole("GERENTE", "ADMIN")
                 .requestMatchers(HttpMethod.GET, "/api/productos/**", "/api/categorias/**", "/api/mesas/**",
                                  "/api/tasas/vigente", "/api/turnos/actual").authenticated()
                 .requestMatchers("/api/productos/**", "/api/categorias/**", "/api/mesas/**",

@@ -484,7 +484,7 @@ public class PedidoService {
         String quien = actor == null || actor.id() == null ? null : usuarios.referencia(actor.id()).getNombre();
         eventos.publishEvent(new ComandaSolicitada(p.getId(), p.getNumeroDiario(), tipo, p.getTipo(),
                 p.getMesa() == null ? null : p.getMesa().getNumero(), p.getClienteNombre(), entrega, atendio,
-                notasParaCocina(p), lineas.stream().map(d -> new Linea(d.getCantidad(), d.getNombreProducto(), d.getNotas())).toList(),
+                notasParaCocina(p), lineas.stream().map(d -> new Linea(d.getCantidad(), d.getNombreProducto(), d.getNotas(), d.getProducto().getId())).toList(),
                 quien));
     }
 

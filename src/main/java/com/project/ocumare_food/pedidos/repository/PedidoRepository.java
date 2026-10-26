@@ -47,4 +47,11 @@ public interface PedidoRepository extends JpaRepository<Pedido, Long> {
 
     @Query("select coalesce(max(p.numeroDiario), 0) from Pedido p where p.fechaOperativa = :fecha")
     int maxNumeroDiario(LocalDate fecha);
+
+    /** Productos más vendidos (por unidades) desde una fecha, sin contar pedidos anulados. */
+    @Query("""
+            select d.producto.id from Pedido p join p.detalles d
+            where p.creadoEn >= :desde and p.estado <> com.project.ocumare_food.pedidos.model.EstadoPedido.ANULADO
+            group by d.producto.id order by sum(d.cantidad) desc, d.producto.id asc""")
+    List<Long> masVendidos(java.time.LocalDateTime desde, org.springframework.data.domain.Pageable pagina);
 }

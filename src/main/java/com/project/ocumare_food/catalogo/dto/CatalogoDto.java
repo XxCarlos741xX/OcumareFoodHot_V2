@@ -55,14 +55,23 @@ public final class CatalogoDto {
 
     // ---------- Menú público (web) ----------
 
+    /**
+     * destacado: sale en el carrusel "Lo más pedido". motivoCarrusel dice por qué:
+     * IMPULSADO (lo fijó el gerente) o MAS_VENDIDO (de los más vendidos de los últimos días); null si no sale.
+     */
     public record MenuProducto(Long id, String nombre, String descripcion, BigDecimal precioUsd,
-                               BigDecimal precioBs, String imagenUrl, boolean disponible, boolean destacado) {
+                               BigDecimal precioBs, String imagenUrl, boolean disponible, boolean destacado,
+                               String motivoCarrusel) {
     }
 
     public record MenuCategoria(Long id, String nombre, List<MenuProducto> productos) {
     }
 
+    /** Producto del carrusel, en el orden en que se muestra (primero los impulsados). */
+    public record CarruselItem(Long id, String motivo) {
+    }
+
     /** tasaBsPorUsd puede venir vacía si nunca se ha registrado una tasa. */
-    public record MenuResponse(BigDecimal tasaBsPorUsd, List<MenuCategoria> categorias) {
+    public record MenuResponse(BigDecimal tasaBsPorUsd, List<MenuCategoria> categorias, List<CarruselItem> carrusel) {
     }
 }
