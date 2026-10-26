@@ -70,17 +70,18 @@ public class SecurityConfig {
     static final String EMISOR = "ocumare-food";
 
     /**
-     * Política de contenido: la página solo ejecuta scripts propios (nada en línea ni de terceros),
-     * solo habla con este mismo servidor y no puede ser metida en un iframe de otro sitio.
+     * Política de contenido: la página solo ejecuta scripts propios (nada en línea) y el de Google Analytics,
+     * solo habla con este mismo servidor y con Analytics, y no puede ser metida en un iframe de otro sitio.
      * Los estilos en línea y Google Fonts sí se permiten (no ejecutan código).
+     * Analytics solo se carga en la web pública y solo si el cliente acepta las cookies (js/analitica.js).
      */
     static final String CSP = String.join("; ",
             "default-src 'self'",
-            "script-src 'self'",
+            "script-src 'self' https://www.googletagmanager.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
             "font-src 'self' https://fonts.gstatic.com",
-            "img-src 'self' data: blob:",
-            "connect-src 'self'",
+            "img-src 'self' data: blob: https://*.google-analytics.com https://*.googletagmanager.com",
+            "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
             "object-src 'none'",
             "base-uri 'self'",
             "form-action 'self'",

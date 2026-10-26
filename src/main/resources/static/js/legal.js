@@ -6,7 +6,7 @@
 const LEGAL = {
   // Cambia VERSION y FECHA cada vez que cambies el texto de las políticas.
   // Cada pedido web guarda la versión que el cliente aceptó.
-  VERSION: '2026-10-25',
+  VERSION: '2026-10-25b',
   FECHA: '25 de octubre de 2026',
 
   RAZON_SOCIAL: '',                 // nombre legal del negocio o de Néstor como persona natural

@@ -344,6 +344,7 @@ function avisoTasa(){
 }
 
 function abrirPanel(){
+  if (window.analitica) window.analitica.evento('ver_pedido');
   $('panel-contenido').innerHTML = `
     <h2 id="titulo-panel">Tu pedido</h2>
     <div id="resumen-pedido"></div>
@@ -414,6 +415,11 @@ async function enviarPedido(ev){
     } finally { clearTimeout(reloj); }
     if (!resp.ok) throw new Error((r && r.mensaje) || 'No se pudo registrar el pedido.');
     mostrarExito(r, pedido, lineas);
+    // Analytics (solo si el cliente aceptó): monto y cantidad, nunca nombre, teléfono ni dirección.
+    if (window.analitica) window.analitica.evento('pedido_enviado', {
+      currency: 'USD', value: Number(r.totalUsd) || 0, entrega: pedido.entrega === 'DELIVERY' ? 'delivery' : 'retiro',
+      platos: pedido.items.reduce((n, i) => n + i.cantidad, 0),
+    });
     carrito = {}; claveEnvio = null; guardarCarrito(); pintarMenu();
   } catch (e) {
     const msg = e.message.trim();
