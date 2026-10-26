@@ -96,6 +96,16 @@ public class Pedido {
     @Column(name = "clave_externa", length = 64)
     private String claveExterna;
 
+    /**
+     * Prueba de la autorización del cliente web (Ley 1581 de Colombia, art. 9): cuándo aceptó
+     * los Términos y la Política de Privacidad, y qué versión de las políticas tenía en pantalla.
+     */
+    @Column(name = "terminos_aceptados_en")
+    private LocalDateTime terminosAceptadosEn;
+
+    @Column(name = "version_politicas", length = 20)
+    private String versionPoliticas;
+
     // ---- Montos ----
 
     /**

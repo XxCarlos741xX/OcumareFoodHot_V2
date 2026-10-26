@@ -171,6 +171,14 @@ textarea{resize:vertical;min-height:64px}
 .agotado-txt{font-size:.72rem;font-weight:800;color:#FF9A8A;text-transform:none;border:1px solid rgba(255,154,138,.5);border-radius:999px;padding:4px 9px}
 .total-bs{text-align:right;margin-top:-2px}
 .estado-pedido{margin-top:10px;background:var(--tarjeta-2);border:1px solid var(--borde);border-radius:12px;padding:10px}
+.aviso-tasa{text-align:right;font-size:.72rem;color:var(--texto-suave);margin:2px 0 10px}
+.acepto{display:flex;align-items:flex-start;gap:10px;font-weight:500;font-size:.82rem;line-height:1.4;background:var(--tarjeta-2);border:1px solid var(--borde);border-radius:12px;padding:12px}
+.acepto input{width:20px;height:20px;flex:0 0 auto;margin-top:1px;accent-color:var(--naranja)}
+.acepto a{color:var(--dorado);font-weight:700}
+.acepto small{display:block;color:var(--texto-suave);margin-top:4px;font-size:.74rem}
+footer nav{display:flex;gap:6px 14px;justify-content:center;flex-wrap:wrap;margin-top:14px;font-size:.8rem}
+footer nav a{color:var(--texto-suave);font-weight:500;text-decoration:underline}
+footer .tasa-pie{font-size:.75rem;margin-top:10px}
 </style>
 </head>
 <body>
@@ -210,6 +218,13 @@ textarea{resize:vertical;min-height:64px}
   <p><strong class="oro">Ocumare Food Hot</strong> · Trabajamos 24 horas, los 7 días</p>
   <p>📍 Coliseo, El Limón, diagonal a la pasarela, Maracay, Aragua</p>
   <p>📲 <a id="link-wa" href="#" target="_blank" rel="noopener">WhatsApp 0424-315-71-34</a> · <a href="https://www.instagram.com/ocumarefoodhot/" target="_blank" rel="noopener">@ocumarefoodhot</a></p>
+  <p class="tasa-pie">Precios en dólares. Los montos en bolívares se calculan a la tasa oficial BCV del día y pueden variar si pagas otro día.</p>
+  <nav aria-label="Políticas">
+    <a href="legal/terminos.html">Términos y Condiciones</a>
+    <a href="legal/privacidad.html">Privacidad y datos</a>
+    <a href="legal/cookies.html">Cookies</a>
+    <a href="legal/reembolsos.html">Cancelaciones y reembolsos</a>
+  </nav>
 </footer>
 
 <div class="barra" id="barra"><button type="button" id="btn-barra"><span id="barra-cant">Ver pedido</span><span id="barra-total"></span></button></div>
@@ -222,6 +237,7 @@ textarea{resize:vertical;min-height:64px}
 </div>
 
 <!-- ✏️ 3. La configuración del local (WhatsApp, formas de pago, nota del delivery) está al inicio de js/web.js -->
+<script src="js/legal.js"></script>
 <script src="js/web.js"></script>
 </body>
 </html>

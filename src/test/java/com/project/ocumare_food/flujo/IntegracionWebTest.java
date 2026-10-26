@@ -65,7 +65,7 @@ class IntegracionWebTest extends ApiTest {
                 .andExpect(jsonPath("$.destacado").value(false));
 
         post(gerente, "/api/turnos/abrir", "{\"tipo\":\"DIA\"}").andExpect(status().isCreated());
-        post(null, "/api/web/pedidos", "{\"claveExterna\":\"web-pago-0001\",\"clienteNombre\":\"Luis\",\"clienteTelefono\":\"0414 123 4567\","
+        post(null, "/api/web/pedidos", "{\"aceptaTerminos\":true,\"versionPoliticas\":\"2026-10-25\",\"claveExterna\":\"web-pago-0001\",\"clienteNombre\":\"Luis\",\"clienteTelefono\":\"0414 123 4567\","
                 + "\"entrega\":\"DELIVERY\",\"direccionEntrega\":\"El Limón\",\"pago\":\"Pago Móvil\",\"notas\":\"Sin cebolla\","
                 + "\"items\":[{\"productoId\":" + prod + ",\"cantidad\":2}]}").andExpect(status().isCreated());
         get(gerente, "/api/pedidos").andExpect(jsonPath("$[0].tipo").value("WEB"));

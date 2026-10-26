@@ -47,7 +47,7 @@ class LimitePeticionesTest {
     @Test
     void frenaLosPedidosWebEnRafaga() throws Exception {
         // Sin turno abierto responden 503, pero igual cuentan: un bot no puede martillar el endpoint.
-        String pedido = "{\"claveExterna\":\"rafaga-0000001\",\"clienteNombre\":\"Bot\",\"clienteTelefono\":\"04241234567\","
+        String pedido = "{\"aceptaTerminos\":true,\"versionPoliticas\":\"2026-10-25\",\"claveExterna\":\"rafaga-0000001\",\"clienteNombre\":\"Bot\",\"clienteTelefono\":\"04241234567\","
                 + "\"entrega\":\"RETIRO\",\"items\":[{\"productoId\":1,\"cantidad\":1}]}";
         for (int i = 0; i < 2; i++) {
             mvc.perform(desde(post("/api/web/pedidos").contentType(MediaType.APPLICATION_JSON).content(pedido), "192.0.2.3"))

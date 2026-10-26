@@ -238,7 +238,7 @@ class FlujoPedidosTest extends ApiTest {
     // -------------------- Web pública --------------------
 
     private String pedidoWeb(String clave, String extra) {
-        return "{\"claveExterna\":\"" + clave + "\",\"clienteNombre\":\"Luis\",\"clienteTelefono\":\"04141234567\","
+        return "{\"aceptaTerminos\":true,\"versionPoliticas\":\"2026-10-25\",\"claveExterna\":\"" + clave + "\",\"clienteNombre\":\"Luis\",\"clienteTelefono\":\"04141234567\","
                 + "\"entrega\":\"RETIRO\",\"items\":[{\"productoId\":" + hamburguesa + ",\"cantidad\":2}]" + extra + "}";
     }
 
@@ -283,6 +283,11 @@ class FlujoPedidosTest extends ApiTest {
                 .andExpect(jsonPath("$.totalUsd").value(11.0));
         // Delivery sin dirección
         post(null, "/api/web/pedidos", pedidoWeb("clave-web-0003", "").replace("RETIRO", "DELIVERY"))
+                .andExpect(status().isBadRequest());
+        // Sin marcar la casilla de Términos y Privacidad (o sin mandarla) no se recibe
+        post(null, "/api/web/pedidos", pedidoWeb("clave-web-0004", "").replace("\"aceptaTerminos\":true", "\"aceptaTerminos\":false"))
+                .andExpect(status().isBadRequest());
+        post(null, "/api/web/pedidos", pedidoWeb("clave-web-0005", "").replace("\"aceptaTerminos\":true,", ""))
                 .andExpect(status().isBadRequest());
     }
 

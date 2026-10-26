@@ -161,6 +161,8 @@ public class PedidoService {
 
         Pedido p = nuevoPedido(turno, TipoPedido.WEB);
         p.setClaveExterna(req.claveExterna());
+        p.setTerminosAceptadosEn(LocalDateTime.now(reloj));
+        p.setVersionPoliticas(limpio(req.versionPoliticas()) == null ? "sin versión" : limpio(req.versionPoliticas()));
         p.setClienteNombre(limpio(req.clienteNombre()));
         p.setClienteTelefono(limpio(req.clienteTelefono()));
         p.setDireccionEntrega(req.entrega() == EntregaWeb.DELIVERY ? limpio(req.direccionEntrega()) : null);
@@ -170,7 +172,8 @@ public class PedidoService {
         p.setNotas(notas.length() > 500 ? notas.substring(0, 500) : notas.toString());
         List<DetallePedido> lineas = agregarItems(p, req.items());
         Pedido guardado = pedidos.save(p);
-        anotar(guardado, TipoEvento.CREADO, "Pedido recibido por la web: " + resumen(lineas), null, false);
+        anotar(guardado, TipoEvento.CREADO, "Pedido recibido por la web (aceptó términos y privacidad, versión "
+                + guardado.getVersionPoliticas() + "): " + resumen(lineas), null, false);
         eventos.publishEvent(new PedidoWebRecibido(guardado.getId()));
         return PedidoWebResponse.de(guardado);
     }

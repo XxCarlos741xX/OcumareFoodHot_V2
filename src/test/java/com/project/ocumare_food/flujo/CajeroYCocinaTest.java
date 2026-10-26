@@ -82,12 +82,15 @@ class CajeroYCocinaTest extends ApiTest {
         post(mesero, "/api/pedidos/" + p + "/pagos", "{\"metodo\":\"EFECTIVO_USD\",\"monto\":1}").andExpect(status().isForbidden());
         post(cajero, "/api/pedidos/" + p + "/pagos", "{\"metodo\":\"EFECTIVO_USD\",\"monto\":1}").andExpect(status().isOk());
 
-        post(null, "/api/web/pedidos", "{\"claveExterna\":\"cocina-web-001\",\"clienteNombre\":\"Luis\",\"clienteTelefono\":\"04141234567\","
+        post(null, "/api/web/pedidos", "{\"aceptaTerminos\":true,\"versionPoliticas\":\"2026-10-25\",\"claveExterna\":\"cocina-web-001\",\"clienteNombre\":\"Luis\",\"clienteTelefono\":\"04141234567\","
                 + "\"entrega\":\"DELIVERY\",\"direccionEntrega\":\"El Limón\",\"pago\":\"Pago Móvil\",\"notas\":\"Tocar el timbre\","
                 + "\"items\":[{\"productoId\":" + hamburguesa + ",\"cantidad\":1}]}").andExpect(status().isCreated());
         List<Number> web = leer(get(cajero, "/api/pedidos"), "$[?(@.tipo=='WEB')].id");
         long pw = web.get(0).longValue();
-        estado(mesero, pw, "EN_PREPARACION").andExpect(status().isForbidden())
+        // La bitácora deja prueba de que el cliente aceptó los términos y con qué versión
+        get(cajero, "/api/pedidos/" + pw + "/bitacora")
+                .andExpect(jsonPath("$[0].detalle").value(containsString("aceptó términos y privacidad, versión 2026-10-25")));
+        estado(mesero, pw,"EN_PREPARACION").andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.mensaje").value("Los pedidos de la web los acepta el cajero"));
         assertThat(tiposComanda(pw)).isEmpty();
         estado(cajero, pw, "EN_PREPARACION").andExpect(status().isOk());

@@ -333,8 +333,14 @@ function pintarResumen(){
       </li>`).join('')}</ul>
     <button class="vaciar" type="button" data-vaciar>Vaciar pedido</button>
     <div class="total"><span>Total</span><span>${dinero(total.toFixed(2))}</span></div>
-    ${TASA ? `<p class="nota-chica total-bs">${bolivares(total * TASA)} a la tasa de hoy</p>` : ''}`;
+    ${TASA ? `<p class="nota-chica total-bs">${bolivares(total * TASA)}</p>
+    <p class="aviso-tasa">${esc(avisoTasa())}</p>` : ''}`;
   lineas.forEach(l => pintarContador(l.id));
+}
+
+// La tasa la carga el local en el sistema (tasa oficial BCV del día).
+function avisoTasa(){
+  return `Monto en Bs a la tasa BCV de hoy (Bs ${Number(TASA).toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} por $1). Puede variar si pagas otro día.`;
 }
 
 function abrirPanel(){
@@ -352,6 +358,9 @@ function abrirPanel(){
       <label id="campo-direccion">Dirección y punto de referencia<textarea name="direccion" maxlength="200" required placeholder="Sector, calle, casa y una referencia"></textarea></label>
       <label>Forma de pago<select name="pago" required>${CONFIG.METODOS_PAGO.map(m => `<option>${esc(m)}</option>`).join('')}</select></label>
       <label>Notas (opcional)<textarea name="notas" maxlength="300" placeholder="Sin cebolla, salsa aparte, carne o pollo…"></textarea></label>
+      <label class="acepto"><input type="checkbox" name="acepto" required>
+        <span>Acepto los <a href="legal/terminos.html" target="_blank" rel="noopener">Términos y Condiciones</a> y autorizo el tratamiento de mis datos según la <a href="legal/privacidad.html" target="_blank" rel="noopener">Política de Privacidad</a>.
+        <small>Usamos tu nombre, teléfono y dirección solo para preparar, cobrar y entregar tu pedido. Puedes pedir verlos, corregirlos o borrarlos por WhatsApp.</small></span></label>
       <input class="oculto" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
       <p class="error" id="error"></p>
       <button class="btn" id="btn-enviar" type="submit">Enviar pedido 🔥</button>
@@ -383,6 +392,7 @@ async function enviarPedido(ev){
     entrega: entrega === 'delivery' ? 'DELIVERY' : 'RETIRO',
     direccionEntrega: entrega === 'delivery' ? f.get('direccion') : null,
     pago: f.get('pago'), notas: f.get('notas'), website: f.get('website'),
+    aceptaTerminos: f.get('acepto') === 'on', versionPoliticas: typeof LEGAL !== 'undefined' ? LEGAL.VERSION : null,
     items: Object.entries(carrito).map(([id, cantidad]) => ({ productoId: Number(id), cantidad })),
   };
   const lineas = lineasCarrito();
@@ -437,6 +447,7 @@ function mostrarExito(r, pedido, lineas){
       <p class="grande">#${esc(r.numero)}</p>
       <h2>¡Pedido recibido! 🌴🔥</h2>
       <p>Total: <strong class="oro">${esc(totalTxt)}</strong></p>
+      ${r.totalBs != null ? '<p class="nota-chica">El monto en Bs es a la tasa BCV de hoy y puede variar si pagas otro día. El delivery se confirma aparte.</p>' : ''}
       <p class="estado-pedido" aria-live="polite">Estado: <strong id="estado-pedido">${esc(textoEstado(r.estado, pedido.entrega))}</strong></p>
       <p class="nota-chica" style="margin-top:8px">Ya le llegó al equipo. Te escribimos al WhatsApp que dejaste para confirmar ${pedido.entrega === 'DELIVERY' ? 'el delivery y ' : ''}el pago.</p>
       <a class="btn btn-wa" target="_blank" rel="noopener" href="https://wa.me/${CONFIG.WHATSAPP}?text=${encodeURIComponent(texto)}">Enviar comprobante por WhatsApp</a>

@@ -75,6 +75,11 @@ public final class PedidoDto {
             @Size(max = 40) String pago,
             /** Campo trampa contra bots: una persona nunca lo llena. */
             String website,
+            /** Casilla "Acepto los Términos y la Política de Privacidad". Sin ella no se recibe el pedido. */
+            @NotNull(message = "Debes aceptar los Términos y la Política de Privacidad")
+            @AssertTrue(message = "Debes aceptar los Términos y la Política de Privacidad") Boolean aceptaTerminos,
+            /** Versión (fecha) de las políticas que el cliente vio, p. ej. "2026-10-25". */
+            @Size(max = 20) @Pattern(regexp = "^[0-9A-Za-z.-]*$") String versionPoliticas,
             @NotEmpty @Size(max = MAX_LINEAS) List<@Valid ItemRequest> items) {
     }
 

@@ -61,7 +61,7 @@ class CorteTurnoTest extends ApiTest {
         post(cajero, "/api/pedidos/" + p2 + "/pagos", "{\"metodo\":\"EFECTIVO_BS\",\"monto\":100}").andExpect(status().isOk());
 
         // Web sin pagar
-        post(null, "/api/web/pedidos", "{\"claveExterna\":\"corte-web-001\",\"clienteNombre\":\"Luis\",\"clienteTelefono\":\"04141234567\","
+        post(null, "/api/web/pedidos", "{\"aceptaTerminos\":true,\"versionPoliticas\":\"2026-10-25\",\"claveExterna\":\"corte-web-001\",\"clienteNombre\":\"Luis\",\"clienteTelefono\":\"04141234567\","
                 + "\"entrega\":\"RETIRO\",\"items\":[{\"productoId\":" + hamburguesa + ",\"cantidad\":1}]}").andExpect(status().isCreated());
         java.util.List<Number> idsWeb = leer(get(gerente, "/api/pedidos"), "$[?(@.tipo=='WEB')].id");
         pedidoWeb = idsWeb.get(0).longValue();
