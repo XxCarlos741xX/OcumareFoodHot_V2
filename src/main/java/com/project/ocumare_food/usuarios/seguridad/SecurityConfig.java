@@ -147,8 +147,13 @@ public class SecurityConfig {
                 // Operación diaria
                 .requestMatchers("/api/pedidos/**", "/api/comandas/**").hasAnyRole("MESERO", "CAJERO", "GERENTE", "ADMIN")
                 .anyRequest().authenticated())
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint(RespuestasSeguridad.sinSesion())
+                .accessDeniedHandler(RespuestasSeguridad.sinPermiso()))
             .oauth2ResourceServer(o -> o
                 .bearerTokenResolver(tokenResolver)
+                .authenticationEntryPoint(RespuestasSeguridad.sinSesion())
+                .accessDeniedHandler(RespuestasSeguridad.sinPermiso())
                 .jwt(j -> j.jwtAuthenticationConverter(jwtConverter)));
         return http.build();
     }

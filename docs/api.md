@@ -4,7 +4,7 @@ Todas las rutas empiezan con `/api`. La sesión viaja en la cookie `ocumare_sesi
 SameSite=Strict, Path=/api) que pone `/auth/login`; el navegador la manda sola. Para pruebas o
 herramientas también sirve la cabecera `Authorization: Bearer <token>`.
 Si se pasa un límite por IP la respuesta es `429` con la cabecera `Retry-After` (segundos).
-Errores: `{ "status", "error", "mensaje", "campos" }`.
+Errores: `{ "status", "error", "mensaje", "campos" }` (también los 401 y 403 de seguridad).
 
 ## Público (sin login)
 | Método | Ruta | Uso |
@@ -27,7 +27,7 @@ Errores: `{ "status", "error", "mensaje", "campos" }`.
 
 | Rol | Puede |
 |---|---|
-| MESERO | Tomar pedidos, agregar platos, enviarlos a cocina, quitar lo que todavía no salió a cocina, reimprimir. Su lista de pedidos muestra solo los que tomó él. |
+| MESERO | Tomar pedidos, agregar platos, enviarlos a cocina, quitar lo que todavía no salió a cocina, reimprimir. Su lista de pedidos muestra solo los que tomó él. Puede abrir y atender sus pedidos y cualquier **mesa abierta** (para cubrir a un compañero); los demás pedidos (web, para llevar o cerrados de otros) responden `403`. |
 | CAJERO | Todo lo del mesero, más: cobrar, aceptar pedidos web, quitar platos ya enviados a cocina, ver todos los pedidos y la bitácora, abrir y cerrar el turno con su conteo. |
 | GERENTE | Todo lo del cajero, más: anular, carta, mesas, tasa, personal (meseros y cajeros), ventas, historial de turnos, corregir conteos, impresoras. |
 | ADMIN | Todo, incluso crear gerentes y administradores. |
@@ -35,7 +35,7 @@ Errores: `{ "status", "error", "mensaje", "campos" }`.
 ## Pedidos (todo el personal)
 | Método | Ruta | Uso |
 |---|---|---|
-| GET | /pedidos?soloAbiertos=&turnoId= | Pedidos del turno (el mesero solo ve los suyos). Los web traen `entrega`: DELIVERY o RETIRO |
+| GET | /pedidos?soloAbiertos=&turnoId= | Pedidos del turno (el mesero solo ve los suyos). Los web traen `entrega`: DELIVERY o RETIRO. Sin turno abierto: `[]` |
 | GET | /pedidos/{id} | Detalle con líneas (cada una con `enviadoCocina`) y pagos |
 | POST | /pedidos | `{tipo: MESA\|PARA_LLEVAR\|DELIVERY, mesaId?, cliente…, items:[{productoId, cantidad, notas}]}` |
 | POST | /pedidos/{id}/items | Agregar líneas `[{productoId, cantidad}]`. Si el pedido ya está en cocina, sale una comanda ADICIONAL |
@@ -45,7 +45,7 @@ Errores: `{ "status", "error", "mensaje", "campos" }`.
 | POST | /pedidos/{id}/pagos | **Cajero, Gerente, Admin.** `{metodo, monto, referencia?}` (monto en la moneda del método) |
 | POST | /pedidos/{id}/anular | `{motivo}` — solo Gerente/Admin y sin pagos. Si estaba en cocina, sale una comanda de ANULADO |
 | GET | /pedidos/{id}/bitacora | **Cajero, Gerente, Admin.** Quién hizo qué y cuándo |
-| GET | /pedidos/bitacora?turnoId=&soloAlertas= | **Cajero, Gerente, Admin.** Bitácora del turno (por defecto el abierto). Alertas: platos quitados después de ir a cocina, anulaciones y reimpresiones |
+| GET | /pedidos/bitacora?turnoId=&soloAlertas= | **Cajero, Gerente, Admin.** Bitácora del turno (por defecto el abierto; sin turno abierto: `[]`). Alertas: platos quitados después de ir a cocina, anulaciones y reimpresiones |
 
 Un pedido pasa solo a **PAGADO** cuando está ENTREGADO y su saldo es 0.
 
@@ -88,6 +88,8 @@ conectar una impresora). El texto va sin tildes para que cualquier térmica lo i
 - **Tasa opcional:** se usa la última registrada. Sin ninguna, el pedido va solo en USD; cobrar en Bs exige que exista una tasa.
 - **Turno obligatorio:** sin turno abierto no se toman pedidos (la web responde 503 "no está recibiendo pedidos").
 - **Precios siempre de la base:** lo que mande el cliente como precio se ignora.
+- **La web solo pide lo que ve:** un plato de una categoría oculta responde `400` en `/web/pedidos` (el personal sí puede venderlo en el local).
+- **Hora del negocio:** todas las fechas (pedidos, pagos, bitácora, turnos, tasas, comandas) van en hora de Caracas, sin importar la zona del servidor.
 - **Pago:** no se acepta más que el saldo (margen $0.05 por redondeo); el vuelto no se registra. Pago móvil, Zelle y transferencia exigen referencia.
 - **Cada pago guarda el turno en que entró el dinero** (para el corte del Paso 4).
 

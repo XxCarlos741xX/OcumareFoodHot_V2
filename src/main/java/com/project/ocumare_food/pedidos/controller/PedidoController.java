@@ -56,8 +56,8 @@ public class PedidoController {
     }
 
     @GetMapping("/{id}")
-    public PedidoResponse obtener(@PathVariable Long id) {
-        return pedidos.obtener(id);
+    public PedidoResponse obtener(@PathVariable Long id, @AuthenticationPrincipal Jwt jwt) {
+        return pedidos.obtener(id, UsuarioActual.de(jwt));
     }
 
     @PostMapping

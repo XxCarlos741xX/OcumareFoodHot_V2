@@ -170,7 +170,7 @@ public class PedidoService {
         if (limpio(req.pago()) != null) notas.append(" Pago: ").append(limpio(req.pago())).append('.');
         if (limpio(req.notas()) != null) notas.append(' ').append(limpio(req.notas()));
         p.setNotas(notas.length() > 500 ? notas.substring(0, 500) : notas.toString());
-        List<DetallePedido> lineas = agregarItems(p, req.items());
+        List<DetallePedido> lineas = agregarItems(p, req.items(), true);
         Pedido guardado = pedidos.save(p);
         anotar(guardado, TipoEvento.CREADO, "Pedido recibido por la web (aceptó términos y privacidad, versión "
                 + guardado.getVersionPoliticas() + "): " + resumen(lineas), null, false);
@@ -203,6 +203,11 @@ public class PedidoService {
 
     /** Agrega las líneas al pedido y devuelve las que creó. */
     private List<DetallePedido> agregarItems(Pedido p, List<ItemRequest> items) {
+        return agregarItems(p, items, false);
+    }
+
+    /** soloCarta = pedido de la web: solo se aceptan platos que el cliente ve en la carta (categoría visible). */
+    private List<DetallePedido> agregarItems(Pedido p, List<ItemRequest> items, boolean soloCarta) {
         if (p.getDetalles().size() + items.size() > MAX_LINEAS) {
             throw ErrorNegocio.invalido("El pedido no puede tener más de " + MAX_LINEAS + " líneas");
         }
@@ -212,7 +217,7 @@ public class PedidoService {
                 .forEach(pr -> porId.put(pr.getId(), pr));
         for (ItemRequest it : items) {
             Producto pr = porId.get(it.productoId());
-            if (pr == null || !pr.isActivo()) {
+            if (pr == null || !pr.isActivo() || (soloCarta && !pr.getCategoria().isActiva())) {
                 throw ErrorNegocio.invalido("El producto " + it.productoId() + " no existe");
             }
             if (!pr.isDisponible()) {
@@ -233,9 +238,8 @@ public class PedidoService {
      */
     @Transactional(readOnly = true)
     public List<PedidoResumen> listar(Long turnoId, boolean soloAbiertos, UsuarioActual actor) {
-        Long id = turnoId != null ? turnoId : turnos.turnoAbierto()
-                .map(Turno::getId)
-                .orElseThrow(() -> ErrorNegocio.noEncontrado("No hay ningún turno abierto"));
+        Long id = turnoId != null ? turnoId : turnos.turnoAbierto().map(Turno::getId).orElse(null);
+        if (id == null) return List.of();          // sin turno abierto no hay pedidos que mostrar
         List<Pedido> lista = soloAbiertos
                 ? pedidos.findByTurnoIdAndEstadoInOrderByIdDesc(id, PedidoRepository.ESTADOS_ABIERTOS)
                 : pedidos.findByTurnoIdOrderByIdDesc(id);
@@ -254,9 +258,8 @@ public class PedidoService {
     /** Bitácora de un turno (por defecto el abierto), de lo más nuevo a lo más viejo. */
     @Transactional(readOnly = true)
     public List<EventoResponse> bitacoraTurno(Long turnoId, boolean soloAlertas) {
-        Long id = turnoId != null ? turnoId : turnos.turnoAbierto()
-                .map(Turno::getId)
-                .orElseThrow(() -> ErrorNegocio.noEncontrado("No hay ningún turno abierto"));
+        Long id = turnoId != null ? turnoId : turnos.turnoAbierto().map(Turno::getId).orElse(null);
+        if (id == null) return List.of();
         List<EventoPedido> lista = soloAlertas
                 ? bitacora.findByTurnoIdAndAlertaTrueOrderByIdDesc(id)
                 : bitacora.findByTurnoIdOrderByIdDesc(id);
@@ -264,16 +267,37 @@ public class PedidoService {
     }
 
     @Transactional(readOnly = true)
-    public PedidoResponse obtener(Long id) {
-        return PedidoResponse.de(pedido(id));
+    public PedidoResponse obtener(Long id, UsuarioActual actor) {
+        return PedidoResponse.de(pedidoVisible(id, actor));
+    }
+
+    /**
+     * El mesero trabaja con sus pedidos y con las mesas que siguen abiertas (puede cubrir la mesa de un
+     * compañero desde el salón). Lo demás (pedidos cerrados, web o para llevar de otros) es de caja y gerencia.
+     */
+    private Pedido pedidoVisible(Long id, UsuarioActual actor) {
+        Pedido p = pedido(id);
+        verificarAcceso(p, actor);
+        return p;
+    }
+
+    private static void verificarAcceso(Pedido p, UsuarioActual actor) {
+        if (actor.esCaja()) return;
+        boolean esSuyo = p.getMesero() != null && p.getMesero().getId().equals(actor.id());
+        boolean mesaAbierta = p.getTipo() == TipoPedido.MESA && EDITABLES.contains(p.getEstado());
+        if (!esSuyo && !mesaAbierta) {
+            throw ErrorNegocio.prohibido(p.getTipo() == TipoPedido.WEB
+                    ? "Los pedidos de la web los atiende el cajero"
+                    : "Este pedido lo atiende otra persona");
+        }
     }
 
     private Pedido pedido(Long id) {
         return pedidos.findById(id).orElseThrow(() -> ErrorNegocio.noEncontrado("Pedido no encontrado"));
     }
 
-    private Pedido pedidoEditable(Long id) {
-        Pedido p = pedido(id);
+    private Pedido pedidoEditable(Long id, UsuarioActual actor) {
+        Pedido p = pedidoVisible(id, actor);
         if (!EDITABLES.contains(p.getEstado())) {
             throw ErrorNegocio.conflicto("El pedido #" + p.getNumeroDiario() + " está " + p.getEstado() + " y ya no se puede modificar");
         }
@@ -285,7 +309,7 @@ public class PedidoService {
     /** Si el pedido ya está en cocina, lo agregado sale enseguida como comanda ADICIONAL. */
     @Transactional
     public PedidoResponse agregarItems(Long id, List<ItemRequest> items, UsuarioActual actor) {
-        Pedido p = pedidoEditable(id);
+        Pedido p = pedidoEditable(id, actor);
         List<DetallePedido> nuevas = agregarItems(p, items);
         boolean enCocina = p.getEstado() != EstadoPedido.ABIERTO;
         if (enCocina) {
@@ -304,7 +328,7 @@ public class PedidoService {
      */
     @Transactional
     public PedidoResponse quitarItem(Long id, Long detalleId, UsuarioActual actor) {
-        Pedido p = pedidoEditable(id);
+        Pedido p = pedidoEditable(id, actor);
         DetallePedido d = p.getDetalles().stream().filter(x -> x.getId().equals(detalleId)).findFirst()
                 .orElseThrow(() -> ErrorNegocio.noEncontrado("Ese producto no está en el pedido"));
         if (d.isEnviadoCocina() && !actor.esCaja()) {
@@ -343,6 +367,7 @@ public class PedidoService {
         if (nuevo == EstadoPedido.EN_PREPARACION && p.getTipo() == TipoPedido.WEB && !actor.esCaja()) {
             throw ErrorNegocio.prohibido("Los pedidos de la web los acepta el cajero");
         }
+        verificarAcceso(p, actor);
         p.setEstado(nuevo);
         String texto = switch (nuevo) {
             case EN_PREPARACION -> p.getTipo() == TipoPedido.WEB ? "Aceptó el pedido web y lo envió a cocina" : "Lo envió a cocina";
@@ -363,7 +388,7 @@ public class PedidoService {
     /** Vuelve a imprimir en cocina lo que ya se envió (marcado como REIMPRESIÓN para que no se prepare dos veces). */
     @Transactional
     public PedidoResponse reimprimir(Long id, UsuarioActual actor) {
-        Pedido p = pedido(id);
+        Pedido p = pedidoVisible(id, actor);
         if (p.getEstado() == EstadoPedido.ANULADO) throw ErrorNegocio.conflicto("El pedido está anulado");
         List<DetallePedido> enviados = p.getDetalles().stream().filter(DetallePedido::isEnviadoCocina).toList();
         if (enviados.isEmpty()) throw ErrorNegocio.conflicto("Este pedido todavía no se ha enviado a cocina");
@@ -401,7 +426,7 @@ public class PedidoService {
         if (!actor.esCaja()) {
             throw ErrorNegocio.prohibido("Solo el cajero o el gerente puede cobrar");
         }
-        Pedido p = pedidoEditable(id);
+        Pedido p = pedidoEditable(id, actor);
         Turno turno = turnos.turnoAbierto()
                 .orElseThrow(() -> ErrorNegocio.conflicto("No hay un turno abierto para registrar el cobro"));
 

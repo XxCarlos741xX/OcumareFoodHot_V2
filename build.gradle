@@ -54,6 +54,8 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+	// Igual que main(): todo en hora de Venezuela desde el arranque (ver RelojConfig)
+	jvmArgs '-Duser.timezone=America/Caracas'
 }
 
 // El paquete para el servidor siempre se llama igual: build/libs/ocumare.jar
