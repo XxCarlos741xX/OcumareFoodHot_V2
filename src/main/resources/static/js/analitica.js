@@ -5,7 +5,7 @@
    Vacío ('') = Analytics apagado y no sale el aviso de cookies.
    ===================================================================== */
 const ANALITICA = {
-  ID: '',
+  ID: 'G-EPJY6PJ0B9',
 };
 
 
