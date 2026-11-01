@@ -7,10 +7,12 @@ import com.project.ocumare_food.pedidos.ConsultasPedidos;
 import com.project.ocumare_food.pedidos.PedidoWebRecibido;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionOperations;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
@@ -27,6 +29,11 @@ import java.util.stream.Collectors;
  * Avisa al grupo de Telegram del equipo cuando entra un pedido web (como hacía la versión con Apps Script).
  * Es opcional: si no están TELEGRAM_TOKEN y TELEGRAM_CHAT_ID, no hace nada.
  * Corre después de guardar el pedido y en segundo plano: si Telegram falla, el pedido no se pierde.
+ *
+ * Importante: el aviso NO abre una transacción dentro del pedido. Antes usaba REQUIRES_NEW, que pedía una
+ * segunda conexión mientras el pedido aún tenía la suya; con muchos pedidos web a la vez el pool se llenaba
+ * de pedidos esperando una segunda conexión y todo se trababa 30 s (lo encontró la prueba de carga).
+ * Ahora, si Telegram está apagado no toca la base, y si está prendido lee el pedido en un hilo aparte.
  */
 @Service
 public class NotificadorPedidos {
@@ -34,14 +41,26 @@ public class NotificadorPedidos {
     private static final Logger log = LoggerFactory.getLogger(NotificadorPedidos.class);
 
     private final ConsultasPedidos pedidos;
+    private final TransactionOperations lectura;
     private final String token;
     private final String chatId;
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
 
-    public NotificadorPedidos(ConsultasPedidos pedidos,
+    @Autowired
+    public NotificadorPedidos(ConsultasPedidos pedidos, PlatformTransactionManager transacciones,
                               @Value("${ocumare.telegram.token:}") String token,
                               @Value("${ocumare.telegram.chat-id:}") String chatId) {
+        this(pedidos, soloLectura(transacciones), token, chatId);
+    }
+
+    /** Para pruebas. */
+    public NotificadorPedidos(ConsultasPedidos pedidos, String token, String chatId) {
+        this(pedidos, TransactionOperations.withoutTransaction(), token, chatId);
+    }
+
+    private NotificadorPedidos(ConsultasPedidos pedidos, TransactionOperations lectura, String token, String chatId) {
         this.pedidos = pedidos;
+        this.lectura = lectura;
         this.token = token == null ? "" : token.trim();
         this.chatId = chatId == null ? "" : chatId.trim();
     }
@@ -50,13 +69,23 @@ public class NotificadorPedidos {
         return !token.isEmpty() && !chatId.isEmpty();
     }
 
+    private static TransactionOperations soloLectura(PlatformTransactionManager transacciones) {
+        TransactionTemplate t = new TransactionTemplate(transacciones);
+        t.setReadOnly(true);
+        return t;
+    }
+
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
     public void alRecibirPedidoWeb(PedidoWebRecibido evento) {
         if (!activo()) return;
-        pedidos.buscar(evento.pedidoId()).ifPresent(p -> {
-            String texto = mensaje(p);
-            Thread.ofVirtual().start(() -> enviar(texto));
+        // En otro hilo: la petición del cliente termina y suelta su conexión sin esperar a Telegram.
+        Thread.ofVirtual().start(() -> {
+            try {
+                String texto = lectura.execute(estado -> pedidos.buscar(evento.pedidoId()).map(NotificadorPedidos::mensaje).orElse(null));
+                if (texto != null) enviar(texto);
+            } catch (Exception e) {
+                log.warn("No se pudo preparar el aviso del pedido {}: {}", evento.pedidoId(), e.getMessage());
+            }
         });
     }
 
