@@ -171,10 +171,20 @@ legend { color: var(--humo); font-size: .9rem; margin-bottom: 6px; padding: 0; }
 
 /* ---------- Pedidos ---------- */
 .lista-pedidos { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.pedido-tarjeta {
+  display: flex; align-items: center; gap: 4px 12px; padding-right: 14px; border-radius: var(--radio);
+  background: var(--brasa); border-left: 4px solid var(--ceniza);
+}
 .pedido-fila {
+  flex: 1; min-width: 0;
   display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "num que total" "num estado total";
-  align-items: center; column-gap: 14px; padding: 12px 14px; border-radius: var(--radio);
-  background: var(--brasa); color: inherit; text-decoration: none; border-left: 4px solid var(--ceniza);
+  align-items: center; column-gap: 14px; padding: 12px 0 12px 14px; color: inherit; text-decoration: none;
+}
+.pedido-accion { flex: none; min-height: 40px; padding: 0 14px; font-size: .88rem; white-space: nowrap; }
+@media (max-width: 520px) {
+  .pedido-tarjeta { flex-wrap: wrap; padding: 0 14px 12px 0; }
+  .pedido-fila { flex-basis: 100%; }
+  .pedido-accion { margin-left: 14px; width: calc(100% - 14px); }
 }
 .pedido-num { grid-area: num; font: 700 1.3rem/1 var(--serif); color: var(--oro); min-width: 2.2ch; }
 .pedido-que { grid-area: que; display: grid; }
